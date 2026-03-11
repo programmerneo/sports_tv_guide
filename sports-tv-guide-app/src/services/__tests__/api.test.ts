@@ -55,12 +55,18 @@ const SAMPLE_GAME_SUMMARY = {
     homeTeamStats: {
       teamId: '150',
       teamName: 'Duke Blue Devils',
-      points: 85,
+      statistics: [
+        { label: 'FG', displayValue: '30-60' },
+        { label: 'Rebounds', displayValue: '35' },
+      ],
     },
     awayTeamStats: {
       teamId: '153',
       teamName: 'North Carolina Tar Heels',
-      points: 78,
+      statistics: [
+        { label: 'FG', displayValue: '28-62' },
+        { label: 'Rebounds', displayValue: '30' },
+      ],
     },
   },
   plays: [{ id: '1', period: 1, description: 'Jump ball' }],

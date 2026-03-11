@@ -6,6 +6,7 @@ import {
   parseHex,
   colorDistance,
   lightenColor,
+  luminance,
   ensureContrastingColors,
 } from '../BoxScoreModal';
 
@@ -96,5 +97,34 @@ describe('ensureContrastingColors', () => {
     const [awayNew, homeNew] = ensureContrastingColors(awayOrig, homeOrig);
     const newDist = colorDistance(awayNew, homeNew);
     expect(newDist).toBeGreaterThan(origDist);
+  });
+
+  it('lightens away color when both colors are dark even if RGB distance > threshold', () => {
+    // Black vs dark navy — distance ~100 (above 80) but both very dark
+    const [away, home] = ensureContrastingColors('#000000', '#0D1361');
+    expect(home).toBe('#0D1361');
+    expect(away).not.toBe('#000000');
+    // The adjusted colors should be more distinguishable
+    const newDist = colorDistance(away, home);
+    const origDist = colorDistance('#000000', '#0D1361');
+    expect(newDist).toBeGreaterThan(origDist);
+  });
+});
+
+describe('luminance', () => {
+  it('returns 0 for black', () => {
+    expect(luminance('#000000')).toBe(0);
+  });
+
+  it('returns 1 for white', () => {
+    expect(luminance('#ffffff')).toBeCloseTo(1, 2);
+  });
+
+  it('returns low value for dark colors', () => {
+    expect(luminance('#0D1361')).toBeLessThan(0.15);
+  });
+
+  it('returns high value for bright colors', () => {
+    expect(luminance('#ff0000')).toBeGreaterThan(0.15);
   });
 });

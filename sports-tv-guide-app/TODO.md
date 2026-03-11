@@ -140,7 +140,7 @@ Track of what's complete, in progress, and what still needs work.
 #### Accessibility (a11y)
 - 📋 Screen reader support
 - 📋 Keyboard navigation
-- 📋 Color contrast improvements
+- ✅ Color contrast improvements (predictor bar: luminance check for dark team colors)
 - 📋 Alt text for all images
 
 **Estimated:** 2-3 hours
