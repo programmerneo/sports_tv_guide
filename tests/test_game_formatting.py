@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from services.game_espn_service import GameService
 from tests.fixtures.espn_data import (
+    SAMPLE_ESPN_MLB_BOXSCORE,
     SAMPLE_ESPN_PREDICTOR,
     SAMPLE_ESPN_SUMMARY,
     SAMPLE_ESPN_WINPROBABILITY,
@@ -54,6 +55,37 @@ def test_format_summary_extended_data():
     assert result["boxScore"] is not None
     assert result["plays"] is not None
     assert result["leaders"] is not None
+
+
+def test_format_summary_boxscore_parsing():
+    """Box score stats are parsed from ESPN's flat statistics array."""
+    result = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
+    bs = result["boxScore"]
+    assert bs is not None
+
+    home = bs["homeTeamStats"]
+    assert home["teamId"] == "150"
+    assert home["teamName"] == "Duke Blue Devils"
+    stats = home["statistics"]
+    assert len(stats) > 0
+    # ESPN label/displayValue pairs are passed through
+    labels = {s["label"] for s in stats}
+    assert "FG" in labels
+    assert "Rebounds" in labels
+    fg = next(s for s in stats if s["label"] == "FG")
+    assert fg["displayValue"] == "30-60"
+
+    away = bs["awayTeamStats"]
+    assert away["teamId"] == "153"
+    away_fg = next(s for s in away["statistics"] if s["label"] == "FG")
+    assert away_fg["displayValue"] == "28-62"
+
+
+def test_format_summary_boxscore_empty():
+    """Missing boxscore returns None."""
+    data = {**SAMPLE_ESPN_SUMMARY, "boxscore": None}
+    result = GameService._format_summary(data, "basketball-college")
+    assert result["boxScore"] is None
 
 
 def test_format_summary_empty_data():
@@ -131,3 +163,40 @@ def test_format_summary_team_colors():
     result = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
     assert result["homeTeam"]["color"] == "003087"
     assert result["awayTeam"]["color"] == "7BAFD4"
+
+
+def test_parse_boxscore_baseball():
+    """Baseball nested category stats are flattened into label/value pairs."""
+    bs = GameService._parse_boxscore(SAMPLE_ESPN_MLB_BOXSCORE)
+    assert bs is not None
+
+    home = bs["homeTeamStats"]
+    assert home["teamId"] == "15"
+    stats = home["statistics"]
+    labels = [s["label"] for s in stats]
+
+    # Batting stats
+    assert "R" in labels
+    assert "H" in labels
+    assert "HR" in labels
+    assert "AVG" in labels
+    runs = next(s for s in stats if s["label"] == "R")
+    assert runs["displayValue"] == "5"
+
+    # Pitching stats — shared names disambiguated with (P)
+    assert "ERA" in labels
+    assert "IP" in labels
+    assert "K (P)" in labels
+    era = next(s for s in stats if s["label"] == "ERA")
+    assert era["displayValue"] == "3.00"
+
+    # Fielding stats
+    assert "E" in labels
+    errors = next(s for s in stats if s["label"] == "E")
+    assert errors["displayValue"] == "0"
+
+    # Away team
+    away = bs["awayTeamStats"]
+    assert away["teamId"] == "30"
+    away_errors = next(s for s in away["statistics"] if s["label"] == "E")
+    assert away_errors["displayValue"] == "2"

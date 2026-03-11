@@ -2,7 +2,7 @@
  * In Progress Today Section - Shows live and upcoming games at the top
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
 
 import { Game } from '@types/index';
@@ -30,81 +30,108 @@ const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }
     return `${minutes}m`;
   };
 
+  const gamesBySport = useMemo(() => {
+    const grouped = new Map<string, Game[]>();
+    for (const game of games) {
+      const existing = grouped.get(game.sport) || [];
+      existing.push(game);
+      grouped.set(game.sport, existing);
+    }
+    return grouped;
+  }, [games]);
+
   if (games.length === 0) {
     return null;
   }
+
+  const sportKeys = Array.from(gamesBySport.keys());
 
   return (
     <>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>In Progress</Text>
+          <Text style={styles.title}>In Progress ({games.length})</Text>
         </View>
 
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
+          showsHorizontalScrollIndicator={true}
           style={styles.scrollContainer}
           contentContainerStyle={styles.contentContainer}
         >
-          {games.slice(0, 5).map((game) => (
-            <TouchableOpacity
-              key={game.id}
-              style={styles.gameCard}
-              onPress={() => setSelectedGame(game)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.gameHeader}>
-                <Text style={styles.networkText}>{game.network}</Text>
-                <Text
-                  style={[
-                    styles.countdown,
-                    formatCountdown(game.startTime) === 'LIVE' && styles.countdownLive,
-                  ]}
-                >
-                  {formatCountdown(game.startTime)}
+          {sportKeys.map((sport, sportIndex) => (
+            <React.Fragment key={sport}>
+              {sportIndex > 0 && (
+                <View style={styles.sportDivider}>
+                  <View style={styles.dividerLine} />
+                </View>
+              )}
+              <View style={styles.sportLabelContainer}>
+                <Text style={styles.sportLabel}>
+                  {SPORTS[sport as keyof typeof SPORTS]?.emoji}{' '}
+                  {SPORTS[sport as keyof typeof SPORTS]?.displayName || sport}
                 </Text>
               </View>
+              {gamesBySport.get(sport)!.map((game) => (
+                <TouchableOpacity
+                  key={game.id}
+                  style={styles.gameCard}
+                  onPress={() => setSelectedGame(game)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.gameHeader}>
+                    <Text style={styles.networkText}>{game.network}</Text>
+                    <Text
+                      style={[
+                        styles.countdown,
+                        formatCountdown(game.startTime) === 'LIVE' && styles.countdownLive,
+                      ]}
+                    >
+                      {formatCountdown(game.startTime)}
+                    </Text>
+                  </View>
 
-              <View style={styles.matchup}>
-                <View style={styles.team}>
-                  {game.awayTeam.logo ? (
-                    <Image source={{ uri: game.awayTeam.logo }} style={styles.teamLogo} />
-                  ) : (
-                    <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                  <View style={styles.matchup}>
+                    <View style={styles.team}>
+                      {game.awayTeam.logo ? (
+                        <Image source={{ uri: game.awayTeam.logo }} style={styles.teamLogo} />
+                      ) : (
+                        <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                      )}
+                      <Text style={styles.teamName}>{game.awayTeam.abbreviation}</Text>
+                    </View>
+
+                    <Text style={styles.vs}>vs</Text>
+
+                    <View style={styles.team}>
+                      {game.homeTeam.logo ? (
+                        <Image source={{ uri: game.homeTeam.logo }} style={styles.teamLogo} />
+                      ) : (
+                        <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                      )}
+                      <Text style={styles.teamName}>{game.homeTeam.abbreviation}</Text>
+                    </View>
+                  </View>
+
+                  {game.status === 'in_progress' && (
+                    <View style={styles.liveScore}>
+                      <Text style={styles.score}>
+                        {game.awayScore} - {game.homeScore}
+                      </Text>
+                      {game.statusDetail && <Text style={styles.quarter}>{game.statusDetail}</Text>}
+                    </View>
                   )}
-                  <Text style={styles.teamName}>{game.awayTeam.abbreviation}</Text>
-                </View>
-
-                <Text style={styles.vs}>vs</Text>
-
-                <View style={styles.team}>
-                  {game.homeTeam.logo ? (
-                    <Image source={{ uri: game.homeTeam.logo }} style={styles.teamLogo} />
-                  ) : (
-                    <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                  {game.status === 'completed' && (
+                    <View style={styles.finalScore}>
+                      <Text style={styles.score}>
+                        {game.awayScore} - {game.homeScore}
+                      </Text>
+                      <Text style={styles.finalLabel}>FINAL</Text>
+                    </View>
                   )}
-                  <Text style={styles.teamName}>{game.homeTeam.abbreviation}</Text>
-                </View>
-              </View>
-
-              {game.status === 'in_progress' && (
-                <View style={styles.liveScore}>
-                  <Text style={styles.score}>
-                    {game.awayScore} - {game.homeScore}
-                  </Text>
-                  {game.statusDetail && <Text style={styles.quarter}>{game.statusDetail}</Text>}
-                </View>
-              )}
-              {game.status === 'completed' && (
-                <View style={styles.finalScore}>
-                  <Text style={styles.score}>
-                    {game.awayScore} - {game.homeScore}
-                  </Text>
-                  <Text style={styles.finalLabel}>FINAL</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </React.Fragment>
           ))}
         </ScrollView>
       </View>
@@ -124,12 +151,12 @@ const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 8,
   },
   header: {
     marginBottom: 12,
+    paddingHorizontal: 16,
   },
   title: {
     fontSize: 14,
@@ -141,7 +168,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   contentContainer: {
-    paddingRight: 8,
+    paddingLeft: 16,
+    paddingRight: 16,
+    alignItems: 'center',
+  },
+  sportDivider: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  dividerLine: {
+    width: 1,
+    height: 80,
+    backgroundColor: COLORS.BORDER,
+  },
+  sportLabelContainer: {
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  sportLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.LIGHT_TEXT,
+    textTransform: 'uppercase',
   },
   gameCard: {
     backgroundColor: COLORS.LIGHT_BG,

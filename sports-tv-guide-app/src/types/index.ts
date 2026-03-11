@@ -73,28 +73,15 @@ export interface BoxScore {
   awayTeamStats: TeamStats;
 }
 
+export interface StatEntry {
+  label: string;
+  displayValue: string;
+}
+
 export interface TeamStats {
   teamId: string;
   teamName: string;
-  points: number;
-  field_goals?: {
-    made: number;
-    attempted: number;
-  };
-  three_pointers?: {
-    made: number;
-    attempted: number;
-  };
-  free_throws?: {
-    made: number;
-    attempted: number;
-  };
-  rebounds?: number;
-  assists?: number;
-  turnovers?: number;
-  steals?: number;
-  blocks?: number;
-  fouls?: number;
+  statistics: StatEntry[];
 }
 
 export interface Play {

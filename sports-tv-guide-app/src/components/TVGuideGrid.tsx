@@ -9,7 +9,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  Dimensions,
+  useWindowDimensions,
   Image,
 } from 'react-native';
 
@@ -123,7 +123,7 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
     }
   }, [currentSlotIndex]);
 
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const columnWidth = (screenWidth - 60) / Math.max(sports.length, 1);
   // Reserve space for header bar, in-progress section, sport tabs, and bottom nav
   const gridHeight = screenHeight - 250;

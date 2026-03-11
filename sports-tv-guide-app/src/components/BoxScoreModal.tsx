@@ -56,12 +56,22 @@ export const lightenColor = (hex: string, amount: number): string => {
 };
 
 /**
+ * Relative luminance of a hex color (0 = black, 1 = white).
+ */
+export const luminance = (hex: string): number => {
+  const [r, g, b] = parseHex(hex);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+};
+
+/**
  * Ensure two bar colors are visually distinguishable.
- * If they're too similar, lighten the away team color.
+ * If they're too similar OR both are very dark, lighten the away team color.
  */
 export const ensureContrastingColors = (away: string, home: string): [string, string] => {
   const MIN_DISTANCE = 80;
-  if (colorDistance(away, home) < MIN_DISTANCE) {
+  const DARK_THRESHOLD = 0.15;
+  const bothDark = luminance(away) < DARK_THRESHOLD && luminance(home) < DARK_THRESHOLD;
+  if (bothDark || colorDistance(away, home) < MIN_DISTANCE) {
     return [lightenColor(away, 0.45), home];
   }
   return [away, home];
@@ -131,8 +141,6 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
       setLoading(false);
     }
   };
-
-  const handleRefresh = isGolf ? loadGolfLeaderboard : loadGameSummary;
 
   const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
@@ -326,44 +334,79 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
         </View>
       </View>
 
-      {/* Predictor Bar — uses team colors from ESPN (hex without '#') with
-           generic blue fallbacks. Shows "FAVORED" label on the higher-projection side.
-           Data source: "predictor" (pre-game) or "winprobability" (live/completed). */}
-      {(gameSummary.predictor || game.predictor) &&
-        (() => {
-          const predictor = gameSummary.predictor || game.predictor;
-          const awayPct = predictor?.awayTeam?.gameProjection;
-          const homePct = predictor?.homeTeam?.gameProjection;
-          if (awayPct == null || homePct == null) return null;
-          // ESPN returns color as hex without '#' prefix (e.g. "003087")
-          const rawAwayColor = game.awayTeam.color ? `#${game.awayTeam.color}` : '#8899cc';
-          const rawHomeColor = game.homeTeam.color ? `#${game.homeTeam.color}` : '#3a4d8f';
-          const [awayColor, homeColor] = ensureContrastingColors(rawAwayColor, rawHomeColor);
-          const awayFavored = awayPct > homePct;
-          return (
-            <View style={styles.predictorSection}>
-              <Text style={styles.predictorTitle}>Matchup Predictor</Text>
-              <View style={styles.predictorBarContainer}>
-                <View
-                  style={[styles.predictorBarAway, { flex: awayPct, backgroundColor: awayColor }]}
-                />
-                <View
-                  style={[styles.predictorBarHome, { flex: homePct, backgroundColor: homeColor }]}
-                />
-              </View>
-              <View style={styles.predictorLabels}>
-                <View style={styles.predictorLabelRow}>
-                  <Text style={styles.predictorPct}>{awayPct.toFixed(1)}%</Text>
-                  {awayFavored && <Text style={styles.predictorFavored}>FAVORED</Text>}
+      {/* Score Bar (completed) or Predictor Bar (scheduled/in-progress).
+           Uses team colors from ESPN (hex without '#') with generic blue fallbacks. */}
+      {game.status === 'completed' && game.awayScore != null && game.homeScore != null
+        ? (() => {
+            const awayScore = game.awayScore!;
+            const homeScore = game.homeScore!;
+            const rawAwayColor = game.awayTeam.color ? `#${game.awayTeam.color}` : '#8899cc';
+            const rawHomeColor = game.homeTeam.color ? `#${game.homeTeam.color}` : '#3a4d8f';
+            const [awayColor, homeColor] = ensureContrastingColors(rawAwayColor, rawHomeColor);
+            return (
+              <View style={styles.predictorSection}>
+                <Text style={styles.predictorTitle}>Final Score</Text>
+                <View style={styles.predictorBarContainer}>
+                  <View
+                    style={[
+                      styles.predictorBarAway,
+                      { flex: awayScore, backgroundColor: awayColor },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.predictorBarHome,
+                      { flex: homeScore, backgroundColor: homeColor },
+                    ]}
+                  />
                 </View>
-                <View style={styles.predictorLabelRow}>
-                  {!awayFavored && <Text style={styles.predictorFavored}>FAVORED</Text>}
-                  <Text style={styles.predictorPct}>{homePct.toFixed(1)}%</Text>
+                <View style={styles.predictorLabels}>
+                  <View style={styles.predictorLabelRow}>
+                    <Text style={styles.predictorPct}>{awayScore}</Text>
+                    {awayScore > homeScore && <Text style={styles.predictorFavored}>WIN</Text>}
+                  </View>
+                  <View style={styles.predictorLabelRow}>
+                    {homeScore > awayScore && <Text style={styles.predictorFavored}>WIN</Text>}
+                    <Text style={styles.predictorPct}>{homeScore}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          );
-        })()}
+            );
+          })()
+        : (gameSummary.predictor || game.predictor) &&
+          (() => {
+            const predictor = gameSummary.predictor || game.predictor;
+            const awayPct = predictor?.awayTeam?.gameProjection;
+            const homePct = predictor?.homeTeam?.gameProjection;
+            if (awayPct == null || homePct == null) return null;
+            const rawAwayColor = game.awayTeam.color ? `#${game.awayTeam.color}` : '#8899cc';
+            const rawHomeColor = game.homeTeam.color ? `#${game.homeTeam.color}` : '#3a4d8f';
+            const [awayColor, homeColor] = ensureContrastingColors(rawAwayColor, rawHomeColor);
+            const awayFavored = awayPct > homePct;
+            return (
+              <View style={styles.predictorSection}>
+                <Text style={styles.predictorTitle}>Matchup Predictor</Text>
+                <View style={styles.predictorBarContainer}>
+                  <View
+                    style={[styles.predictorBarAway, { flex: awayPct, backgroundColor: awayColor }]}
+                  />
+                  <View
+                    style={[styles.predictorBarHome, { flex: homePct, backgroundColor: homeColor }]}
+                  />
+                </View>
+                <View style={styles.predictorLabels}>
+                  <View style={styles.predictorLabelRow}>
+                    <Text style={styles.predictorPct}>{awayPct.toFixed(1)}%</Text>
+                    {awayFavored && <Text style={styles.predictorFavored}>FAVORED</Text>}
+                  </View>
+                  <View style={styles.predictorLabelRow}>
+                    {!awayFavored && <Text style={styles.predictorFavored}>FAVORED</Text>}
+                    <Text style={styles.predictorPct}>{homePct.toFixed(1)}%</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
 
       {/* Game Info */}
       <View style={styles.infoSection}>
@@ -418,39 +461,31 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
           <Text style={styles.sectionTitle}>Box Score</Text>
 
           {/* Away Team Stats */}
-          {gameSummary.boxScore.awayTeamStats && (
+          {gameSummary.boxScore.awayTeamStats?.statistics?.length > 0 && (
             <View style={styles.teamStatsBox}>
               <Text style={styles.teamStatsName}>{game.awayTeam.abbreviation}</Text>
               <View style={styles.statsGrid}>
-                {Object.entries(gameSummary.boxScore.awayTeamStats).map(
-                  ([key, value]) =>
-                    key !== 'teamId' &&
-                    key !== 'teamName' && (
-                      <View key={key} style={styles.statItem}>
-                        <Text style={styles.statLabel}>{key.toUpperCase().substring(0, 3)}</Text>
-                        <Text style={styles.statValue}>{String(value)}</Text>
-                      </View>
-                    )
-                )}
+                {gameSummary.boxScore.awayTeamStats.statistics.map((stat) => (
+                  <View key={stat.label} style={styles.statItem}>
+                    <Text style={styles.statLabel}>{stat.label}</Text>
+                    <Text style={styles.statValue}>{stat.displayValue}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
 
           {/* Home Team Stats */}
-          {gameSummary.boxScore.homeTeamStats && (
+          {gameSummary.boxScore.homeTeamStats?.statistics?.length > 0 && (
             <View style={styles.teamStatsBox}>
               <Text style={styles.teamStatsName}>{game.homeTeam.abbreviation}</Text>
               <View style={styles.statsGrid}>
-                {Object.entries(gameSummary.boxScore.homeTeamStats).map(
-                  ([key, value]) =>
-                    key !== 'teamId' &&
-                    key !== 'teamName' && (
-                      <View key={key} style={styles.statItem}>
-                        <Text style={styles.statLabel}>{key.toUpperCase().substring(0, 3)}</Text>
-                        <Text style={styles.statValue}>{String(value)}</Text>
-                      </View>
-                    )
-                )}
+                {gameSummary.boxScore.homeTeamStats.statistics.map((stat) => (
+                  <View key={stat.label} style={styles.statItem}>
+                    <Text style={styles.statLabel}>{stat.label}</Text>
+                    <Text style={styles.statValue}>{stat.displayValue}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           )}
@@ -470,9 +505,7 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
           <Text style={styles.headerTitle}>
             {isGolf ? 'Tournament Leaderboard' : 'Game Details'}
           </Text>
-          <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
-            <Text style={styles.refreshText}>🔄</Text>
-          </TouchableOpacity>
+          <View style={styles.headerSpacer} />
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
@@ -523,11 +556,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: COLORS.WHITE,
   },
-  refreshButton: {
-    padding: 8,
-  },
-  refreshText: {
-    fontSize: 16,
+  headerSpacer: {
+    width: 60,
   },
   content: {
     flex: 1,

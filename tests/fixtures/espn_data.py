@@ -119,9 +119,194 @@ SAMPLE_ESPN_SUMMARY = {
         },
     },
     "pickcenter": [{"spread": -3.5, "overUnder": 155.5}],
-    "boxscore": {"teams": [{"team": {"id": "150"}}]},
+    "boxscore": {
+        "teams": [
+            {
+                "homeAway": "home",
+                "team": {"id": "150", "displayName": "Duke Blue Devils"},
+                "statistics": [
+                    {
+                        "name": "fieldGoalsMade-fieldGoalsAttempted",
+                        "displayValue": "30-60",
+                        "label": "FG",
+                    },
+                    {
+                        "name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted",
+                        "displayValue": "5-15",
+                        "label": "3PT",
+                    },
+                    {
+                        "name": "freeThrowsMade-freeThrowsAttempted",
+                        "displayValue": "20-25",
+                        "label": "FT",
+                    },
+                    {
+                        "name": "totalRebounds",
+                        "displayValue": "35",
+                        "label": "Rebounds",
+                    },
+                    {"name": "assists", "displayValue": "18", "label": "Assists"},
+                    {"name": "turnovers", "displayValue": "10", "label": "Turnovers"},
+                    {"name": "steals", "displayValue": "7", "label": "Steals"},
+                    {"name": "blocks", "displayValue": "4", "label": "Blocks"},
+                    {"name": "fouls", "displayValue": "15", "label": "Fouls"},
+                ],
+            },
+            {
+                "homeAway": "away",
+                "team": {"id": "153", "displayName": "North Carolina Tar Heels"},
+                "statistics": [
+                    {
+                        "name": "fieldGoalsMade-fieldGoalsAttempted",
+                        "displayValue": "28-62",
+                        "label": "FG",
+                    },
+                    {
+                        "name": "threePointFieldGoalsMade-threePointFieldGoalsAttempted",
+                        "displayValue": "8-20",
+                        "label": "3PT",
+                    },
+                    {
+                        "name": "freeThrowsMade-freeThrowsAttempted",
+                        "displayValue": "14-18",
+                        "label": "FT",
+                    },
+                    {
+                        "name": "totalRebounds",
+                        "displayValue": "30",
+                        "label": "Rebounds",
+                    },
+                    {"name": "assists", "displayValue": "15", "label": "Assists"},
+                    {"name": "turnovers", "displayValue": "12", "label": "Turnovers"},
+                    {"name": "steals", "displayValue": "5", "label": "Steals"},
+                    {"name": "blocks", "displayValue": "3", "label": "Blocks"},
+                    {"name": "fouls", "displayValue": "20", "label": "Fouls"},
+                ],
+            },
+        ],
+    },
     "plays": [{"id": "1", "text": "Jump ball"}],
     "leaders": [{"team": {"id": "150"}}],
+}
+
+# ── Baseball boxscore fixture ────────────────────────────────────────────────
+# ESPN MLB uses a nested category structure instead of flat stats.
+
+SAMPLE_ESPN_MLB_BOXSCORE = {
+    "teams": [
+        {
+            "homeAway": "home",
+            "team": {"id": "15", "displayName": "Atlanta Braves"},
+            "statistics": [
+                {
+                    "name": "batting",
+                    "stats": [
+                        {"name": "runs", "displayValue": "5", "abbreviation": "R"},
+                        {"name": "hits", "displayValue": "9", "abbreviation": "H"},
+                        {"name": "homeRuns", "displayValue": "2", "abbreviation": "HR"},
+                        {"name": "RBIs", "displayValue": "5", "abbreviation": "RBI"},
+                        {"name": "walks", "displayValue": "3", "abbreviation": "BB"},
+                        {
+                            "name": "strikeouts",
+                            "displayValue": "12",
+                            "abbreviation": "K",
+                        },
+                        {
+                            "name": "stolenBases",
+                            "displayValue": "1",
+                            "abbreviation": "SB",
+                        },
+                        {"name": "avg", "displayValue": ".273", "abbreviation": "AVG"},
+                    ],
+                },
+                {
+                    "name": "pitching",
+                    "stats": [
+                        {"name": "ERA", "displayValue": "3.00", "abbreviation": "ERA"},
+                        {
+                            "name": "innings",
+                            "displayValue": "9.0",
+                            "abbreviation": "IP",
+                        },
+                        {
+                            "name": "strikeouts",
+                            "displayValue": "10",
+                            "abbreviation": "K",
+                        },
+                        {"name": "walks", "displayValue": "2", "abbreviation": "BB"},
+                        {"name": "hits", "displayValue": "7", "abbreviation": "H"},
+                        {
+                            "name": "earnedRuns",
+                            "displayValue": "3",
+                            "abbreviation": "ER",
+                        },
+                    ],
+                },
+                {
+                    "name": "fielding",
+                    "stats": [
+                        {"name": "errors", "displayValue": "0", "abbreviation": "E"},
+                    ],
+                },
+            ],
+        },
+        {
+            "homeAway": "away",
+            "team": {"id": "30", "displayName": "Tampa Bay Rays"},
+            "statistics": [
+                {
+                    "name": "batting",
+                    "stats": [
+                        {"name": "runs", "displayValue": "3", "abbreviation": "R"},
+                        {"name": "hits", "displayValue": "7", "abbreviation": "H"},
+                        {"name": "homeRuns", "displayValue": "1", "abbreviation": "HR"},
+                        {"name": "RBIs", "displayValue": "3", "abbreviation": "RBI"},
+                        {"name": "walks", "displayValue": "2", "abbreviation": "BB"},
+                        {
+                            "name": "strikeouts",
+                            "displayValue": "8",
+                            "abbreviation": "K",
+                        },
+                        {
+                            "name": "stolenBases",
+                            "displayValue": "0",
+                            "abbreviation": "SB",
+                        },
+                        {"name": "avg", "displayValue": ".206", "abbreviation": "AVG"},
+                    ],
+                },
+                {
+                    "name": "pitching",
+                    "stats": [
+                        {"name": "ERA", "displayValue": "5.63", "abbreviation": "ERA"},
+                        {
+                            "name": "innings",
+                            "displayValue": "8.0",
+                            "abbreviation": "IP",
+                        },
+                        {
+                            "name": "strikeouts",
+                            "displayValue": "12",
+                            "abbreviation": "K",
+                        },
+                        {"name": "walks", "displayValue": "3", "abbreviation": "BB"},
+                        {"name": "hits", "displayValue": "9", "abbreviation": "H"},
+                        {
+                            "name": "earnedRuns",
+                            "displayValue": "5",
+                            "abbreviation": "ER",
+                        },
+                    ],
+                },
+                {
+                    "name": "fielding",
+                    "stats": [
+                        {"name": "errors", "displayValue": "2", "abbreviation": "E"},
+                    ],
+                },
+            ],
+        },
+    ],
 }
 
 # ── Win probability fixture (live / completed games) ────────────────────────

@@ -163,7 +163,7 @@ class GameService:
             else None,
             "odds": odds,
             "predictor": predictor,
-            "boxScore": data.get("boxscore"),
+            "boxScore": cls._parse_boxscore(data.get("boxscore")),
             "plays": data.get("plays"),
             "leaders": data.get("leaders"),
         }
@@ -258,3 +258,150 @@ class GameService:
                 group_id = href.split("/group/")[-1]
                 conf_names[group_id] = short
         return conf_names
+
+    # Key batting stats to display for baseball box scores (in order).
+    _MLB_BATTING_STATS = [
+        "runs",
+        "hits",
+        "homeRuns",
+        "RBIs",
+        "walks",
+        "strikeouts",
+        "stolenBases",
+        "avg",
+    ]
+    # Key pitching stats to display for baseball box scores (in order).
+    _MLB_PITCHING_STATS = [
+        "ERA",
+        "innings",
+        "strikeouts",
+        "walks",
+        "hits",
+        "earnedRuns",
+    ]
+    # Key fielding stats.
+    _MLB_FIELDING_STATS = ["errors"]
+
+    @classmethod
+    def _parse_boxscore(cls, boxscore: dict | None) -> dict | None:
+        """Parse ESPN boxscore into {homeTeamStats, awayTeamStats}.
+
+        ESPN returns ``boxscore.teams[]`` where each team entry has a
+        ``statistics`` array.  The structure varies by sport:
+
+        - **Basketball / Football / Hockey**: flat list of
+          ``{name, displayValue, label}`` objects.
+        - **Baseball**: category objects (``batting``, ``pitching``,
+          ``fielding``) each containing a ``stats`` sub-array of
+          ``{name, displayValue, abbreviation}`` objects.
+
+        This method normalises both into a generic ``[{label, displayValue}]``
+        format the frontend can render for any sport.
+
+        Args:
+            boxscore: Raw ESPN boxscore dict, or None.
+
+        Returns:
+            Parsed boxscore with ``homeTeamStats`` and ``awayTeamStats``,
+            or None if data is missing.
+        """
+        if not boxscore:
+            return None
+
+        teams = boxscore.get("teams", [])
+        if not teams:
+            return None
+
+        result = {}
+        for entry in teams:
+            home_away = entry.get("homeAway", "")
+            team_info = entry.get("team", {})
+            stats_list = entry.get("statistics", [])
+
+            # Detect baseball: categories have a nested "stats" sub-array
+            # instead of a direct "displayValue" on each entry.
+            is_baseball = any(s.get("stats") for s in stats_list)
+
+            if is_baseball:
+                statistics = cls._parse_baseball_stats(stats_list)
+            else:
+                statistics = [
+                    {
+                        "label": s.get("label", s.get("name", "")),
+                        "displayValue": s.get("displayValue", ""),
+                    }
+                    for s in stats_list
+                    if s.get("displayValue")
+                ]
+
+            team_stats = {
+                "teamId": team_info.get("id", ""),
+                "teamName": team_info.get("displayName", ""),
+                "statistics": statistics,
+            }
+
+            key = "homeTeamStats" if home_away == "home" else "awayTeamStats"
+            result[key] = team_stats
+
+        if "homeTeamStats" not in result or "awayTeamStats" not in result:
+            return None
+
+        return result
+
+    @classmethod
+    def _parse_baseball_stats(cls, stats_list: list[dict]) -> list[dict]:
+        """Extract key stats from baseball's nested category structure.
+
+        Baseball stats are grouped into categories (batting, pitching,
+        fielding) each with a ``stats`` sub-array.  This method picks
+        the most relevant stats and flattens them into label/value pairs.
+        """
+        categories: dict[str, dict[str, str]] = {}
+        for cat in stats_list:
+            cat_name = cat.get("name", "")
+            cat_stats = cat.get("stats", [])
+            categories[cat_name] = {
+                s["name"]: s.get("displayValue", "") for s in cat_stats if "name" in s
+            }
+
+        # Map of category → stat names to display, with abbreviation labels.
+        display_map = [
+            ("batting", cls._MLB_BATTING_STATS),
+            ("pitching", cls._MLB_PITCHING_STATS),
+            ("fielding", cls._MLB_FIELDING_STATS),
+        ]
+
+        result: list[dict] = []
+        for cat_name, stat_names in display_map:
+            cat_data = categories.get(cat_name, {})
+            for stat_name in stat_names:
+                value = cat_data.get(stat_name)
+                if value is not None:
+                    # Use abbreviation-style labels for display
+                    label = cls._baseball_label(cat_name, stat_name)
+                    result.append({"label": label, "displayValue": str(value)})
+
+        return result
+
+    @staticmethod
+    def _baseball_label(category: str, stat_name: str) -> str:
+        """Human-friendly label for a baseball stat."""
+        labels = {
+            "runs": "R",
+            "hits": "H",
+            "homeRuns": "HR",
+            "RBIs": "RBI",
+            "walks": "BB",
+            "strikeouts": "K",
+            "stolenBases": "SB",
+            "avg": "AVG",
+            "ERA": "ERA",
+            "innings": "IP",
+            "earnedRuns": "ER",
+            "errors": "E",
+        }
+        label = labels.get(stat_name, stat_name)
+        # Disambiguate shared stat names between batting/pitching
+        if stat_name in ("hits", "walks", "strikeouts") and category == "pitching":
+            label = f"{label} (P)"
+        return label

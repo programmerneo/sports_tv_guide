@@ -8,8 +8,8 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost
 export const API_TIMEOUT = 10000; // 10 seconds
 
 export const SPORTS: Record<SportType, { label: string; emoji: string; displayName: string }> = {
-  'basketball-college': { label: '🏀', emoji: '🏀', displayName: 'College Basketball' },
-  'football-college': { label: '🏈', emoji: '🏈', displayName: 'College Football' },
+  'basketball-college': { label: '🏀', emoji: '🏀', displayName: 'NCAAB' },
+  'football-college': { label: '🏈', emoji: '🏈', displayName: 'NCAAF' },
   'football-nfl': { label: '🏈', emoji: '🏈', displayName: 'NFL' },
   'golf-pga': { label: '⛳', emoji: '⛳', displayName: 'PGA Golf' },
   'golf-liv': { label: '⛳', emoji: '⛳', displayName: 'LIV Golf' },
