@@ -1,0 +1,1281 @@
+{
+  "game": {
+    "$defs": {
+      "OddsSchema": {
+        "properties": {
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Spread"
+          },
+          "overUnder": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Overunder"
+          }
+        },
+        "title": "OddsSchema",
+        "type": "object"
+      },
+      "PredictorSchema": {
+        "properties": {
+          "homeTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "awayTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "PredictorSchema",
+        "type": "object"
+      },
+      "PredictorTeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "gameProjection": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gameprojection"
+          },
+          "teamChanceLoss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Teamchanceloss"
+          }
+        },
+        "title": "PredictorTeamSchema",
+        "type": "object"
+      },
+      "TeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "abbreviation": {
+            "title": "Abbreviation",
+            "type": "string"
+          },
+          "logo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Logo"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record"
+          },
+          "conferenceRecord": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conferencerecord"
+          },
+          "conference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conference"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rank"
+          }
+        },
+        "required": [
+          "name",
+          "abbreviation"
+        ],
+        "title": "TeamSchema",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "eventId": {
+        "title": "Eventid",
+        "type": "string"
+      },
+      "sport": {
+        "title": "Sport",
+        "type": "string"
+      },
+      "homeTeam": {
+        "$ref": "#/$defs/TeamSchema"
+      },
+      "awayTeam": {
+        "$ref": "#/$defs/TeamSchema"
+      },
+      "status": {
+        "title": "Status",
+        "type": "string"
+      },
+      "startTime": {
+        "title": "Starttime",
+        "type": "string"
+      },
+      "endTime": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Endtime"
+      },
+      "network": {
+        "title": "Network",
+        "type": "string"
+      },
+      "homeScore": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Homescore"
+      },
+      "awayScore": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Awayscore"
+      },
+      "venue": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venue"
+      },
+      "venueCity": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venuecity"
+      },
+      "venueState": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venuestate"
+      },
+      "quarter": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Quarter"
+      },
+      "timeRemaining": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Timeremaining"
+      },
+      "statusDetail": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Statusdetail"
+      },
+      "odds": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/OddsSchema"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "predictor": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/PredictorSchema"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      }
+    },
+    "required": [
+      "id",
+      "eventId",
+      "sport",
+      "homeTeam",
+      "awayTeam",
+      "status",
+      "startTime",
+      "network"
+    ],
+    "title": "GameSchema",
+    "type": "object"
+  },
+  "gameSummary": {
+    "$defs": {
+      "OddsSchema": {
+        "properties": {
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Spread"
+          },
+          "overUnder": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Overunder"
+          }
+        },
+        "title": "OddsSchema",
+        "type": "object"
+      },
+      "PredictorSchema": {
+        "properties": {
+          "homeTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "awayTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "PredictorSchema",
+        "type": "object"
+      },
+      "PredictorTeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "gameProjection": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gameprojection"
+          },
+          "teamChanceLoss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Teamchanceloss"
+          }
+        },
+        "title": "PredictorTeamSchema",
+        "type": "object"
+      },
+      "TeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "abbreviation": {
+            "title": "Abbreviation",
+            "type": "string"
+          },
+          "logo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Logo"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record"
+          },
+          "conferenceRecord": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conferencerecord"
+          },
+          "conference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conference"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rank"
+          }
+        },
+        "required": [
+          "name",
+          "abbreviation"
+        ],
+        "title": "TeamSchema",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "eventId": {
+        "title": "Eventid",
+        "type": "string"
+      },
+      "sport": {
+        "title": "Sport",
+        "type": "string"
+      },
+      "homeTeam": {
+        "$ref": "#/$defs/TeamSchema"
+      },
+      "awayTeam": {
+        "$ref": "#/$defs/TeamSchema"
+      },
+      "status": {
+        "title": "Status",
+        "type": "string"
+      },
+      "startTime": {
+        "title": "Starttime",
+        "type": "string"
+      },
+      "endTime": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Endtime"
+      },
+      "network": {
+        "title": "Network",
+        "type": "string"
+      },
+      "homeScore": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Homescore"
+      },
+      "awayScore": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Awayscore"
+      },
+      "venue": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venue"
+      },
+      "venueCity": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venuecity"
+      },
+      "venueState": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Venuestate"
+      },
+      "quarter": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Quarter"
+      },
+      "timeRemaining": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Timeremaining"
+      },
+      "statusDetail": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Statusdetail"
+      },
+      "odds": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/OddsSchema"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "predictor": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/PredictorSchema"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "boxScore": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Boxscore"
+      },
+      "plays": {
+        "anyOf": [
+          {
+            "items": {},
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Plays"
+      },
+      "leaders": {
+        "anyOf": [
+          {
+            "items": {},
+            "type": "array"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Leaders"
+      }
+    },
+    "required": [
+      "id",
+      "eventId",
+      "sport",
+      "homeTeam",
+      "awayTeam",
+      "status",
+      "startTime",
+      "network"
+    ],
+    "title": "GameSummarySchema",
+    "type": "object"
+  },
+  "schedule": {
+    "$defs": {
+      "GameSchema": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "eventId": {
+            "title": "Eventid",
+            "type": "string"
+          },
+          "sport": {
+            "title": "Sport",
+            "type": "string"
+          },
+          "homeTeam": {
+            "$ref": "#/$defs/TeamSchema"
+          },
+          "awayTeam": {
+            "$ref": "#/$defs/TeamSchema"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "startTime": {
+            "title": "Starttime",
+            "type": "string"
+          },
+          "endTime": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Endtime"
+          },
+          "network": {
+            "title": "Network",
+            "type": "string"
+          },
+          "homeScore": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Homescore"
+          },
+          "awayScore": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Awayscore"
+          },
+          "venue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Venue"
+          },
+          "venueCity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Venuecity"
+          },
+          "venueState": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Venuestate"
+          },
+          "quarter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Quarter"
+          },
+          "timeRemaining": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Timeremaining"
+          },
+          "statusDetail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Statusdetail"
+          },
+          "odds": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/OddsSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "predictor": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "id",
+          "eventId",
+          "sport",
+          "homeTeam",
+          "awayTeam",
+          "status",
+          "startTime",
+          "network"
+        ],
+        "title": "GameSchema",
+        "type": "object"
+      },
+      "OddsSchema": {
+        "properties": {
+          "spread": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Spread"
+          },
+          "overUnder": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Overunder"
+          }
+        },
+        "title": "OddsSchema",
+        "type": "object"
+      },
+      "PredictorSchema": {
+        "properties": {
+          "homeTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "awayTeam": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/PredictorTeamSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "PredictorSchema",
+        "type": "object"
+      },
+      "PredictorTeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "gameProjection": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Gameprojection"
+          },
+          "teamChanceLoss": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Teamchanceloss"
+          }
+        },
+        "title": "PredictorTeamSchema",
+        "type": "object"
+      },
+      "TeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "abbreviation": {
+            "title": "Abbreviation",
+            "type": "string"
+          },
+          "logo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Logo"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record"
+          },
+          "conferenceRecord": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conferencerecord"
+          },
+          "conference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conference"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rank"
+          }
+        },
+        "required": [
+          "name",
+          "abbreviation"
+        ],
+        "title": "TeamSchema",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "games": {
+        "items": {
+          "$ref": "#/$defs/GameSchema"
+        },
+        "title": "Games",
+        "type": "array"
+      }
+    },
+    "required": [
+      "games"
+    ],
+    "title": "ScheduleResponseSchema",
+    "type": "object"
+  },
+  "team": {
+    "properties": {
+      "id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Id"
+      },
+      "name": {
+        "title": "Name",
+        "type": "string"
+      },
+      "abbreviation": {
+        "title": "Abbreviation",
+        "type": "string"
+      },
+      "logo": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Logo"
+      },
+      "record": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Record"
+      },
+      "conferenceRecord": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Conferencerecord"
+      },
+      "conference": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Conference"
+      },
+      "rank": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Rank"
+      }
+    },
+    "required": [
+      "name",
+      "abbreviation"
+    ],
+    "title": "TeamSchema",
+    "type": "object"
+  },
+  "odds": {
+    "properties": {
+      "spread": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Spread"
+      },
+      "overUnder": {
+        "anyOf": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Overunder"
+      }
+    },
+    "title": "OddsSchema",
+    "type": "object"
+  }
+}

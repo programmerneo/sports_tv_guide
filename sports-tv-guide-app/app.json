@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Sports TV Guide",
+    "slug": "sports-tv-guide",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#667eea"
+    },
+    "ios": {
+      "supportsTabletMode": false,
+      "requireFullScreen": true,
+      "userInterfaceStyle": "light"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#667eea"
+      },
+      "package": "com.sportsguide.app",
+      "googleServicesFile": "./google-services.json"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "apiUrl": "http://localhost:8000",
+      "apiTimeout": 10000
+    }
+  }
+}
