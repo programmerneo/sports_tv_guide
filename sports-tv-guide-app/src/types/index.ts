@@ -132,7 +132,9 @@ export interface GolfLeaderboardEntry {
   position: string | number;
   name: string;
   country: string;
+  countryFlag?: string;
   totalScore: string;
+  totalStrokes?: number | null;
   toPar: string;
   today: string;
   thru: string;
@@ -143,6 +145,13 @@ export interface GolfLeaderboard {
   tournamentName: string;
   statusDetail: string;
   leaderboard: GolfLeaderboardEntry[];
+  courseName?: string;
+  coursePar?: number;
+  courseYards?: number;
+  courseCity?: string;
+  courseState?: string;
+  displayPurse?: string;
+  previousWinner?: string;
 }
 
 export interface Scoreboard {

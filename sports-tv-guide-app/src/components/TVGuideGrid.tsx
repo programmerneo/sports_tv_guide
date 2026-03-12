@@ -123,10 +123,8 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
     }
   }, [currentSlotIndex]);
 
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
   const columnWidth = (screenWidth - 60) / Math.max(sports.length, 1);
-  // Reserve space for header bar, in-progress section, sport tabs, and bottom nav
-  const gridHeight = screenHeight - 250;
 
   if (games.length === 0) {
     return null;
@@ -134,7 +132,7 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
 
   return (
     <>
-      <View style={[styles.container, { height: gridHeight }]}>
+      <View style={[styles.container, { flex: 1 }]}>
         {/* Header Row: pinned above the vertical scroll */}
         <View style={styles.row}>
           <View style={[styles.headerCell, styles.timeColumnHeader]} />
@@ -186,6 +184,7 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
                             hour: 'numeric',
                             minute: '2-digit',
                           });
+                          const isGolf = game.sport.startsWith('golf');
                           return (
                             <TouchableOpacity
                               key={game.id}
@@ -193,30 +192,47 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
                               onPress={() => setSelectedGame(game)}
                               activeOpacity={0.7}
                             >
-                              {/* Teams with logos */}
-                              <View style={styles.teamRow}>
-                                {game.awayTeam.logo && (
-                                  <Image
-                                    source={{ uri: game.awayTeam.logo }}
-                                    style={styles.teamLogo}
-                                  />
-                                )}
-                                <Text style={styles.teamName} numberOfLines={1}>
-                                  {game.awayTeam.abbreviation}
-                                </Text>
-                              </View>
-                              <Text style={styles.vsText}>@</Text>
-                              <View style={styles.teamRow}>
-                                {game.homeTeam.logo && (
-                                  <Image
-                                    source={{ uri: game.homeTeam.logo }}
-                                    style={styles.teamLogo}
-                                  />
-                                )}
-                                <Text style={styles.teamName} numberOfLines={1}>
-                                  {game.homeTeam.abbreviation}
-                                </Text>
-                              </View>
+                              {isGolf ? (
+                                /* Golf: show tournament name */
+                                <View style={styles.teamRow}>
+                                  {game.homeTeam.logo && (
+                                    <Image
+                                      source={{ uri: game.homeTeam.logo }}
+                                      style={styles.teamLogo}
+                                    />
+                                  )}
+                                  <Text style={styles.teamName} numberOfLines={2}>
+                                    {game.homeTeam.name}
+                                  </Text>
+                                </View>
+                              ) : (
+                                /* Teams with logos */
+                                <>
+                                  <View style={styles.teamRow}>
+                                    {game.awayTeam.logo && (
+                                      <Image
+                                        source={{ uri: game.awayTeam.logo }}
+                                        style={styles.teamLogo}
+                                      />
+                                    )}
+                                    <Text style={styles.teamName} numberOfLines={1}>
+                                      {game.awayTeam.abbreviation}
+                                    </Text>
+                                  </View>
+                                  <Text style={styles.vsText}>@</Text>
+                                  <View style={styles.teamRow}>
+                                    {game.homeTeam.logo && (
+                                      <Image
+                                        source={{ uri: game.homeTeam.logo }}
+                                        style={styles.teamLogo}
+                                      />
+                                    )}
+                                    <Text style={styles.teamName} numberOfLines={1}>
+                                      {game.homeTeam.abbreviation}
+                                    </Text>
+                                  </View>
+                                </>
+                              )}
 
                               {/* Status badge + score */}
                               {game.status === 'completed' ? (

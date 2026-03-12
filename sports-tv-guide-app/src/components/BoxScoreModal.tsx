@@ -87,40 +87,10 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
 
   const isGolf = isGolfSport(game.sport);
 
-  useEffect(() => {
-    if (visible) {
-      if (isGolf) {
-        loadGolfLeaderboard();
-      } else {
-        loadGameSummary();
-      }
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [visible, game.id]);
-
-  // Auto-refresh for live games/tournaments
-  useEffect(() => {
-    const isLive = isGolf ? game.status === 'in_progress' : gameSummary.status === 'in_progress';
-
-    if (visible && isLive) {
-      intervalRef.current = setInterval(
-        isGolf ? loadGolfLeaderboard : loadGameSummary,
-        GAME_REFRESH_INTERVAL
-      );
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [visible, gameSummary.status, game.status]);
-
   const loadGameSummary = async () => {
     setLoading(true);
     try {
+      apiService.clearCacheByPattern(`game:${game.sport}:${game.eventId}`);
       const summary = await apiService.getGameSummary(game.sport, game.eventId);
       setGameSummary(summary);
     } catch (error) {
@@ -133,6 +103,7 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
   const loadGolfLeaderboard = async () => {
     setLoading(true);
     try {
+      apiService.clearCacheByPattern(`golf-leaderboard:${game.eventId}`);
       const leaderboard = await apiService.getGolfLeaderboard(game.eventId);
       setGolfLeaderboard(leaderboard);
     } catch (error) {
@@ -141,6 +112,34 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
       setLoading(false);
     }
   };
+
+  // Keep a ref to the latest load function so the interval never goes stale
+  const loadRef = useRef(isGolf ? loadGolfLeaderboard : loadGameSummary);
+  loadRef.current = isGolf ? loadGolfLeaderboard : loadGameSummary;
+
+  useEffect(() => {
+    if (visible) {
+      loadRef.current();
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [visible, game.id]);
+
+  // Auto-refresh for live games/tournaments
+  useEffect(() => {
+    const isLive = isGolf ? game.status === 'in_progress' : gameSummary.status === 'in_progress';
+
+    if (visible && isLive) {
+      intervalRef.current = setInterval(() => loadRef.current(), GAME_REFRESH_INTERVAL);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [visible, gameSummary.status, game.status]);
 
   const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
@@ -180,19 +179,51 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
 
       {/* Tournament Info */}
       <View style={styles.infoSection}>
-        {game.venue && (
+        {(golfLeaderboard?.courseName || game.venue) && (
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Course</Text>
             <View style={styles.infoValueColumn}>
-              <Text style={styles.infoValue}>{game.venue}</Text>
-              {(game.venueCity || game.venueState) && (
+              <Text style={styles.infoValue}>{golfLeaderboard?.courseName || game.venue}</Text>
+              {(golfLeaderboard?.courseCity ||
+                game.venueCity ||
+                golfLeaderboard?.courseState ||
+                game.venueState) && (
                 <Text style={styles.infoValueSecondary}>
-                  {[game.venueCity, game.venueState].filter(Boolean).join(', ')}
+                  {[
+                    golfLeaderboard?.courseCity || game.venueCity,
+                    golfLeaderboard?.courseState || game.venueState,
+                  ]
+                    .filter(Boolean)
+                    .join(', ')}
                 </Text>
               )}
             </View>
           </View>
         )}
+        {golfLeaderboard?.coursePar != null && (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Par</Text>
+            <Text style={styles.infoValue}>{golfLeaderboard.coursePar}</Text>
+          </View>
+        )}
+        {golfLeaderboard?.courseYards != null && (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Yards</Text>
+            <Text style={styles.infoValue}>{golfLeaderboard.courseYards.toLocaleString()}</Text>
+          </View>
+        )}
+        {golfLeaderboard?.displayPurse ? (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Purse</Text>
+            <Text style={styles.infoValue}>{golfLeaderboard.displayPurse}</Text>
+          </View>
+        ) : null}
+        {golfLeaderboard?.previousWinner ? (
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Previous Winner</Text>
+            <Text style={styles.infoValue}>{golfLeaderboard.previousWinner}</Text>
+          </View>
+        ) : null}
         {game.network && game.network !== 'TBD' && (
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Network</Text>
@@ -206,41 +237,72 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
         <View style={styles.leaderboardSection}>
           <Text style={styles.sectionTitle}>Leaderboard - Top 30</Text>
 
-          {/* Leaderboard Header */}
-          <View style={styles.leaderboardHeaderRow}>
-            <Text style={[styles.leaderboardHeaderText, styles.lbPos]}>POS</Text>
-            <Text style={[styles.leaderboardHeaderText, styles.lbName]}>PLAYER</Text>
-            <Text style={[styles.leaderboardHeaderText, styles.lbScore]}>SCORE</Text>
-            <Text style={[styles.leaderboardHeaderText, styles.lbToday]}>TODAY</Text>
-            <Text style={[styles.leaderboardHeaderText, styles.lbThru]}>THRU</Text>
-          </View>
-
-          {/* Leaderboard Rows */}
-          {golfLeaderboard.leaderboard.map((entry: GolfLeaderboardEntry, index: number) => (
-            <View
-              key={`${entry.name}-${index}`}
-              style={[
-                styles.leaderboardRow,
-                index % 2 === 0 && styles.leaderboardRowEven,
-                index < 3 && styles.leaderboardRowTop3,
-              ]}
-            >
-              <Text style={[styles.leaderboardCell, styles.lbPos, index < 3 && styles.lbPosTop3]}>
-                {entry.position}
-              </Text>
-              <View style={styles.lbName}>
-                <Text style={[styles.leaderboardCell, styles.lbPlayerName]} numberOfLines={1}>
-                  {entry.name}
-                </Text>
-                {entry.country ? <Text style={styles.lbCountry}>{entry.country}</Text> : null}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            contentContainerStyle={styles.leaderboardScrollContent}
+          >
+            <View>
+              {/* Leaderboard Header */}
+              <View style={styles.leaderboardHeaderRow}>
+                <Text style={[styles.leaderboardHeaderText, styles.lbPos]} numberOfLines={1}>POS</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbName]} numberOfLines={1}>PLAYER</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbScore]} numberOfLines={1}>SCORE</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbToday]} numberOfLines={1}>TODAY</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbThru]} numberOfLines={1}>THRU</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R1</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R2</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R3</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R4</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbTotal]} numberOfLines={1}>TOT</Text>
               </View>
-              <Text style={[styles.leaderboardCell, styles.lbScore, styles.lbScoreValue]}>
-                {entry.totalScore}
-              </Text>
-              <Text style={[styles.leaderboardCell, styles.lbToday]}>{entry.today || '-'}</Text>
-              <Text style={[styles.leaderboardCell, styles.lbThru]}>{entry.thru || '-'}</Text>
+
+              {/* Leaderboard Rows */}
+              {golfLeaderboard.leaderboard.map((entry: GolfLeaderboardEntry, index: number) => (
+                <View
+                  key={`${entry.name}-${index}`}
+                  style={[
+                    styles.leaderboardRow,
+                    index % 2 === 0 && styles.leaderboardRowEven,
+                    String(entry.position).replace('T', '') === '1' && styles.leaderboardRowTop3,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.leaderboardCell,
+                      styles.lbPos,
+                      String(entry.position).replace('T', '') === '1' && styles.lbPosTop3,
+                    ]}
+                  >
+                    {entry.position}
+                  </Text>
+                  <View style={styles.lbName}>
+                    <View style={styles.lbPlayerRow}>
+                      {entry.countryFlag ? (
+                        <Image source={{ uri: entry.countryFlag }} style={styles.lbFlagImage} />
+                      ) : null}
+                      <Text style={[styles.leaderboardCell, styles.lbPlayerName]} numberOfLines={1}>
+                        {entry.name}
+                      </Text>
+                    </View>
+                    {entry.country ? <Text style={styles.lbCountry}>{entry.country}</Text> : null}
+                  </View>
+                  <Text style={[styles.leaderboardCell, styles.lbScore, styles.lbScoreValue]}>
+                    {entry.totalScore}
+                  </Text>
+                  <Text style={[styles.leaderboardCell, styles.lbToday]}>{entry.today || '-'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbThru]}>{entry.thru || '-'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[0] || '--'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[1] || '--'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[2] || '--'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[3] || '--'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbTotal]}>
+                    {entry.totalStrokes != null ? entry.totalStrokes : '--'}
+                  </Text>
+                </View>
+              ))}
             </View>
-          ))}
+          </ScrollView>
         </View>
       ) : (
         !loading && (
@@ -456,7 +518,7 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
       </View>
 
       {/* Box Score (if available) */}
-      {gameSummary.boxScore && (
+      {gameSummary.boxScore && gameSummary.status !== 'scheduled' && (
         <View style={styles.boxScoreSection}>
           <Text style={styles.sectionTitle}>Box Score</Text>
 
@@ -614,6 +676,11 @@ const styles = StyleSheet.create({
   // ── Leaderboard ─────────────────────────────────────────────────────────────
   leaderboardSection: {
     marginBottom: 16,
+    alignItems: 'center',
+  },
+  leaderboardScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   leaderboardHeaderRow: {
     flexDirection: 'row',
@@ -621,7 +688,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
+    alignItems: 'center',
   },
   leaderboardHeaderText: {
     fontSize: 11,
@@ -632,7 +700,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: COLORS.WHITE,
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.BORDER,
     alignItems: 'center',
@@ -648,7 +716,7 @@ const styles = StyleSheet.create({
     color: COLORS.DARK_TEXT,
   },
   lbPos: {
-    width: 40,
+    width: 36,
     textAlign: 'center',
   },
   lbPosTop3: {
@@ -656,11 +724,22 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY,
   },
   lbName: {
-    flex: 1,
-    paddingRight: 8,
+    width: 160,
+    paddingRight: 6,
+  },
+  lbPlayerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lbFlagImage: {
+    width: 20,
+    height: 14,
+    resizeMode: 'contain',
   },
   lbPlayerName: {
     fontWeight: '500',
+    flexShrink: 1,
   },
   lbCountry: {
     fontSize: 10,
@@ -668,19 +747,28 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   lbScore: {
-    width: 50,
+    width: 46,
     textAlign: 'center',
   },
   lbScoreValue: {
     fontWeight: 'bold',
   },
   lbToday: {
-    width: 50,
+    width: 46,
     textAlign: 'center',
   },
   lbThru: {
     width: 40,
     textAlign: 'center',
+  },
+  lbRound: {
+    width: 36,
+    textAlign: 'center',
+  },
+  lbTotal: {
+    width: 40,
+    textAlign: 'center',
+    fontWeight: '600',
   },
   noLeaderboard: {
     backgroundColor: COLORS.WHITE,

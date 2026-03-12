@@ -7,12 +7,17 @@ schedule and leaderboard views.
 
 from __future__ import annotations
 
+import asyncio
+import logging
 from datetime import datetime, timezone
 
 from constants.espn import SCOREBOARD_URLS, SUMMARY_URLS
 from utils.client import get_client
 
+logger = logging.getLogger(__name__)
+
 LEADERBOARD_LIMIT = 30
+CORE_API_BASE = "https://sports.core.api.espn.com/v2/sports"
 
 
 class GolfService:
@@ -51,19 +56,206 @@ class GolfService:
     async def fetch_leaderboard(cls, event_id: str) -> dict:
         """Fetch golf tournament leaderboard (top 30).
 
+        Tries the ESPN summary endpoint first. If it fails (ESPN
+        intermittently returns 502 for golf summaries), falls back to
+        the core competitors API.
+
         Args:
             event_id: ESPN event ID.
 
         Returns:
             Dict with tournament info and ``leaderboard`` list.
         """
-        url = SUMMARY_URLS["golf-pga"]
         client = get_client()
-        resp = await client.get(url, params={"event": event_id})
-        resp.raise_for_status()
-        data = resp.json()
 
-        return cls._format_leaderboard(data)
+        # Fetch tournament details (course, purse, champion) in parallel
+        # with the leaderboard data
+        details_task = cls._fetch_tournament_details(event_id)
+
+        # Primary: summary endpoint
+        url = SUMMARY_URLS["golf-pga"]
+        resp = await client.get(url, params={"event": event_id})
+
+        details = await details_task
+
+        if resp.status_code == 200:
+            result = cls._format_leaderboard(resp.json())
+            result.update(details)
+            return result
+
+        logger.warning(
+            "Golf summary endpoint returned %s for event %s, using core API fallback",
+            resp.status_code,
+            event_id,
+        )
+
+        result = await cls._fetch_leaderboard_from_core_api(event_id)
+        result.update(details)
+        return result
+
+    @classmethod
+    async def _fetch_tournament_details(cls, event_id: str) -> dict:
+        """Fetch tournament metadata (course, purse, defending champion) from ESPN core API.
+
+        Args:
+            event_id: ESPN event ID.
+
+        Returns:
+            Dict with course info, purse, and defending champion fields.
+        """
+        url = f"{CORE_API_BASE}/golf/leagues/pga/events/{event_id}"
+        client = get_client()
+        try:
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                logger.warning(
+                    "Core API returned %s for event %s", resp.status_code, event_id
+                )
+                return {}
+            data = resp.json()
+        except Exception:
+            logger.warning(
+                "Failed to fetch tournament details for event %s",
+                event_id,
+                exc_info=True,
+            )
+            return {}
+
+        result: dict = {}
+
+        # Course info
+        courses = data.get("courses", [])
+        if courses:
+            course = courses[0]
+            result["courseName"] = course.get("name", "")
+            result["coursePar"] = course.get("shotsToPar")
+            result["courseYards"] = course.get("totalYards")
+            address = course.get("address", {})
+            result["courseCity"] = address.get("city", "")
+            result["courseState"] = address.get("state", "")
+
+        # Purse
+        result["displayPurse"] = data.get("displayPurse", "")
+
+        # Defending champion
+        champ = data.get("defendingChampion", {}).get("athlete", {})
+        if champ:
+            result["previousWinner"] = champ.get("displayName", "")
+
+        return result
+
+    @classmethod
+    async def _fetch_leaderboard_from_core_api(cls, event_id: str) -> dict:
+        """Fallback: build leaderboard from ESPN's core competitors API.
+
+        The core API returns ``$ref`` links per competitor that must be
+        followed individually.  We fetch athlete, status, and score refs
+        in parallel for each of the top 30 competitors.
+
+        Args:
+            event_id: ESPN event ID.
+
+        Returns:
+            Dict with tournament info and ``leaderboard`` list.
+        """
+        base = "https://sports.core.api.espn.com/v2/sports"
+        comp_url = (
+            f"{base}/golf/leagues/pga/events/{event_id}"
+            f"/competitions/{event_id}/competitors"
+        )
+
+        client = get_client()
+        resp = await client.get(comp_url, params={"limit": LEADERBOARD_LIMIT})
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+
+        # Fetch event name from the scoreboard
+        sb_url = f"{SCOREBOARD_URLS['golf-pga']}/{event_id}"
+        sb_resp = await client.get(sb_url)
+        event_name = ""
+        status_detail = ""
+        if sb_resp.status_code == 200:
+            sb_data = sb_resp.json()
+            event_name = sb_data.get("name", "")
+            sb_status = sb_data.get("status", {}).get("type", {})
+            status_detail = sb_status.get("shortDetail", "")
+
+        async def fetch_competitor(item: dict) -> dict | None:
+            """Fetch athlete, status, score, and linescores for a competitor."""
+            refs = {}
+            for key in ("athlete", "status", "score", "linescores"):
+                ref = item.get(key, {})
+                if isinstance(ref, dict) and "$ref" in ref:
+                    refs[key] = ref["$ref"]
+
+            if not refs:
+                return None
+
+            results = {}
+            tasks = {key: client.get(url) for key, url in refs.items()}
+            responses = await asyncio.gather(*tasks.values(), return_exceptions=True)
+
+            for key, response in zip(tasks.keys(), responses):
+                if isinstance(response, Exception):
+                    logger.warning("Failed to fetch %s ref: %s", key, response)
+                    results[key] = {}
+                elif response.status_code == 200:
+                    results[key] = response.json()
+                else:
+                    results[key] = {}
+
+            athlete = results.get("athlete", {})
+            status = results.get("status", {})
+            score = results.get("score", {})
+            linescores_data = results.get("linescores", {})
+
+            position = status.get("position", {})
+            thru = status.get("thru")
+            hole = status.get("hole")
+            state = status.get("type", {}).get("state", "")
+
+            if state == "post":
+                thru_display = "F"
+            elif thru is not None:
+                thru_display = str(thru)
+            elif hole is not None:
+                thru_display = str(hole)
+            else:
+                thru_display = "-"
+
+            # Parse round scores from linescores
+            rounds = []
+            total_strokes = 0
+            has_completed_round = False
+            for ls in linescores_data.get("items", []):
+                value = ls.get("value")
+                display = ls.get("displayValue")
+                if value is not None and display is not None:
+                    rounds.append(str(int(value)))
+                    total_strokes += int(value)
+                    has_completed_round = True
+
+            return {
+                "position": position.get("displayName", str(item.get("order", ""))),
+                "name": athlete.get("displayName", "Unknown"),
+                "country": athlete.get("flag", {}).get("alt", ""),
+                "countryFlag": athlete.get("flag", {}).get("href", ""),
+                "totalScore": score.get("displayValue", "E"),
+                "totalStrokes": total_strokes if has_completed_round else None,
+                "toPar": score.get("displayValue", "E"),
+                "today": status.get("displayValue", ""),
+                "thru": thru_display,
+                "rounds": rounds,
+            }
+
+        entries = await asyncio.gather(*(fetch_competitor(item) for item in items))
+        leaderboard = [e for e in entries if e is not None]
+
+        return {
+            "tournamentName": event_name,
+            "statusDetail": status_detail,
+            "leaderboard": leaderboard,
+        }
 
     @classmethod
     def _format_tournament_as_game(cls, event: dict) -> dict | None:
@@ -124,6 +316,13 @@ class GolfService:
 
         status_detail = status_obj.get("type", {}).get("shortDetail")
 
+        # ESPN golf dates are midnight placeholders (e.g. 2026-03-12T04:00Z).
+        # For in-progress tournaments, use the current time so they appear in
+        # the correct TV guide time slot instead of showing as 11 PM / midnight.
+        start_time = event.get("date", "")
+        if status == "in_progress":
+            start_time = datetime.now(timezone.utc).isoformat()
+
         return {
             "id": event.get("id", ""),
             "eventId": event.get("id", ""),
@@ -149,7 +348,7 @@ class GolfService:
                 "rank": None,
             },
             "status": status,
-            "startTime": event.get("date", ""),
+            "startTime": start_time,
             "endTime": event.get("endDate"),
             "network": network,
             "homeScore": None,
@@ -196,12 +395,20 @@ class GolfService:
             athlete = entry.get("athlete", {})
             stats = entry.get("statistics", [])
 
-            # Parse linescores for round scores
+            # Parse linescores for round scores and total strokes
             rounds = []
+            total_strokes = 0
+            has_completed_round = False
             for ls in entry.get("linescores", []):
-                value = ls.get("displayValue") or ls.get("value")
+                value = ls.get("value")
+                display = ls.get("displayValue") or (
+                    str(int(value)) if value is not None else None
+                )
+                if display is not None:
+                    rounds.append(str(display))
                 if value is not None:
-                    rounds.append(str(value))
+                    total_strokes += int(value)
+                    has_completed_round = True
 
             leaderboard.append(
                 {
@@ -211,7 +418,9 @@ class GolfService:
                     or entry.get("sortOrder", ""),
                     "name": athlete.get("displayName", "Unknown"),
                     "country": athlete.get("flag", {}).get("alt", ""),
+                    "countryFlag": athlete.get("flag", {}).get("href", ""),
                     "totalScore": entry.get("score", {}).get("displayValue", "E"),
+                    "totalStrokes": total_strokes if has_completed_round else None,
                     "toPar": entry.get("statistics", [{}])[0].get("displayValue", "E")
                     if stats
                     else "E",
