@@ -21,6 +21,7 @@ uv run ruff check . && uv run ruff format .  # Lint + format
 - **Scoreboard `groups` param required for college sports.** Without it, ESPN returns only 2-3 featured games. Use `groups=50` (D1 basketball) / `groups=80` (FBS football). Defined in `SCOREBOARD_GROUPS` in `constants/espn.py`. NFL and golf don't need it.
 - **Win projections use two structures.** Summary endpoint: `predictor` object (pre-game, `gameProjection` as percentage string `"76.4"`). Live/completed: `winprobability` array (`homeWinPercentage` as 0-1 decimal). `GameService._parse_predictor` normalises both. Scoreboard does **not** include predictor data.
 - **Team colors are hex without `#`.** ESPN returns `team.color` as bare hex (e.g. `"003087"`). Frontend prepends `#`.
+- **MLB starting pitchers use `probables` array.** ESPN nests pitcher data under `competitors[].probables[].athlete` with stats in `probables[].statistics.splits.categories[]`. `GameService._parse_starting_pitchers` extracts name, headshot, jersey, and filtered stats (ERA, W, L, WHIP, K). Only populated for `baseball-mlb`; other sports get `None`.
 - **Golf dates are midnight placeholders.** ESPN returns `event.date` as midnight ET (e.g. `2026-03-12T04:00Z`) for multi-day tournaments — not a real tee time. `GolfService._format_tournament_as_game` substitutes the current time for in-progress tournaments so they land in the correct TV guide time slot. Golf also uses `homeTeam` for tournament name/logo and `awayTeam` for course info since there are no real teams.
 
 ## Guidelines

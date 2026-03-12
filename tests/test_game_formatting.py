@@ -5,6 +5,7 @@ from __future__ import annotations
 from services.game_espn_service import GameService
 from tests.fixtures.espn_data import (
     SAMPLE_ESPN_MLB_BOXSCORE,
+    SAMPLE_ESPN_MLB_SUMMARY,
     SAMPLE_ESPN_PREDICTOR,
     SAMPLE_ESPN_SUMMARY,
     SAMPLE_ESPN_WINPROBABILITY,
@@ -200,3 +201,49 @@ def test_parse_boxscore_baseball():
     assert away["teamId"] == "30"
     away_errors = next(s for s in away["statistics"] if s["label"] == "E")
     assert away_errors["displayValue"] == "2"
+
+
+def test_parse_starting_pitchers():
+    """Starting pitchers are parsed from ESPN probables for baseball."""
+    result = GameService._format_summary(SAMPLE_ESPN_MLB_SUMMARY, "baseball-mlb")
+    sp = result["startingPitchers"]
+    assert sp is not None
+
+    home = sp["home"]
+    assert home["name"] == "Max Fried"
+    assert home["shortName"] == "M. Fried"
+    assert home["headshot"] == "https://example.com/fried.png"
+    assert home["jersey"] == "32"
+    # Only ERA, W, L, WHIP, K are included
+    assert len(home["statistics"]) == 5
+    era = next(s for s in home["statistics"] if s["label"] == "ERA")
+    assert era["displayValue"] == "3.25"
+
+    away = sp["away"]
+    assert away["name"] == "Shane McClanahan"
+    assert away["shortName"] == "S. McClanahan"
+    assert away["headshot"] == "https://example.com/mcclanahan.png"
+    away_era = next(s for s in away["statistics"] if s["label"] == "ERA")
+    assert away_era["displayValue"] == "2.87"
+
+
+def test_starting_pitchers_none_for_non_baseball():
+    """Non-baseball sports should not have starting pitchers."""
+    result = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
+    assert result["startingPitchers"] is None
+
+
+def test_starting_pitchers_none_when_no_probables():
+    """Baseball games without probables return None."""
+    # Remove probables from competitors
+    data = {**SAMPLE_ESPN_MLB_SUMMARY}
+    header = {**data["header"]}
+    comps = [{**header["competitions"][0]}]
+    comps[0]["competitors"] = [
+        {k: v for k, v in c.items() if k != "probables"}
+        for c in comps[0]["competitors"]
+    ]
+    header["competitions"] = comps
+    data["header"] = header
+    result = GameService._format_summary(data, "baseball-mlb")
+    assert result["startingPitchers"] is None

@@ -68,6 +68,7 @@ class GameSchema(BaseModel):
 
 class GameSummarySchema(GameSchema):
     box_score: dict | None = None
+    starting_pitchers: dict | None = None
     plays: list | None = None
     leaders: list | None = None
 

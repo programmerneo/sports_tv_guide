@@ -309,6 +309,151 @@ SAMPLE_ESPN_MLB_BOXSCORE = {
     ],
 }
 
+# ── Baseball summary with probable pitchers ─────────────────────────────────
+# ESPN includes a ``probables`` array on each competitor for scheduled MLB games.
+
+SAMPLE_ESPN_MLB_SUMMARY = {
+    "header": {
+        "id": "401654321",
+        "competitions": [
+            {
+                "date": "2025-07-10T23:10Z",
+                "status": {
+                    "type": {"state": "pre"},
+                    "displayClock": "0:00",
+                },
+                "competitors": [
+                    {
+                        "homeAway": "home",
+                        "team": {
+                            "id": "15",
+                            "displayName": "Atlanta Braves",
+                            "abbreviation": "ATL",
+                            "logo": "https://example.com/atl.png",
+                            "color": "CE1141",
+                        },
+                        "record": [{"displayValue": "45-38"}],
+                        "probables": [
+                            {
+                                "name": "probableStartingPitcher",
+                                "playerId": 33912,
+                                "athlete": {
+                                    "id": "33912",
+                                    "displayName": "Max Fried",
+                                    "shortName": "M. Fried",
+                                    "headshot": {
+                                        "href": "https://example.com/fried.png",
+                                        "alt": "Max Fried",
+                                    },
+                                    "jersey": "32",
+                                },
+                                "statistics": {
+                                    "splits": {
+                                        "categories": [
+                                            {
+                                                "name": "strikeouts",
+                                                "abbreviation": "K",
+                                                "displayValue": "95",
+                                            },
+                                            {
+                                                "name": "losses",
+                                                "abbreviation": "L",
+                                                "displayValue": "5",
+                                            },
+                                            {
+                                                "name": "wins",
+                                                "abbreviation": "W",
+                                                "displayValue": "10",
+                                            },
+                                            {
+                                                "name": "ERA",
+                                                "abbreviation": "ERA",
+                                                "displayValue": "3.25",
+                                            },
+                                            {
+                                                "name": "WHIP",
+                                                "abbreviation": "WHIP",
+                                                "displayValue": "1.12",
+                                            },
+                                        ]
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                    {
+                        "homeAway": "away",
+                        "team": {
+                            "id": "30",
+                            "displayName": "Tampa Bay Rays",
+                            "abbreviation": "TB",
+                            "logo": "https://example.com/tb.png",
+                            "color": "092C5C",
+                        },
+                        "record": [{"displayValue": "40-43"}],
+                        "probables": [
+                            {
+                                "name": "probableStartingPitcher",
+                                "playerId": 34567,
+                                "athlete": {
+                                    "id": "34567",
+                                    "displayName": "Shane McClanahan",
+                                    "shortName": "S. McClanahan",
+                                    "headshot": {
+                                        "href": "https://example.com/mcclanahan.png",
+                                        "alt": "Shane McClanahan",
+                                    },
+                                    "jersey": "18",
+                                },
+                                "statistics": {
+                                    "splits": {
+                                        "categories": [
+                                            {
+                                                "name": "strikeouts",
+                                                "abbreviation": "K",
+                                                "displayValue": "72",
+                                            },
+                                            {
+                                                "name": "losses",
+                                                "abbreviation": "L",
+                                                "displayValue": "3",
+                                            },
+                                            {
+                                                "name": "wins",
+                                                "abbreviation": "W",
+                                                "displayValue": "8",
+                                            },
+                                            {
+                                                "name": "ERA",
+                                                "abbreviation": "ERA",
+                                                "displayValue": "2.87",
+                                            },
+                                            {
+                                                "name": "WHIP",
+                                                "abbreviation": "WHIP",
+                                                "displayValue": "0.96",
+                                            },
+                                        ]
+                                    }
+                                },
+                            }
+                        ],
+                    },
+                ],
+                "broadcasts": [{"names": ["TBS"]}],
+            }
+        ],
+    },
+    "gameInfo": {
+        "venue": {
+            "fullName": "Truist Park",
+            "address": {"city": "Atlanta", "state": "GA"},
+        },
+    },
+    "pickcenter": [],
+    "boxscore": {"teams": SAMPLE_ESPN_MLB_BOXSCORE["teams"]},
+}
+
 # ── Win probability fixture (live / completed games) ────────────────────────
 # ESPN replaces "predictor" with "winprobability" once a game is in progress.
 # Each entry represents a play; the last entry is the most recent probability.

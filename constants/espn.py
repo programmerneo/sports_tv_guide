@@ -2,6 +2,9 @@
 ESPN public API constants.
 
 Base URLs, endpoint mappings, and stat configurations for ESPN data.
+
+eg. https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401803377
+
 """
 
 # ── Base URLs ─────────────────────────────────────────────────────────────────

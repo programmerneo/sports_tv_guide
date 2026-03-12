@@ -53,7 +53,7 @@ GET /api/game/football-college/{event_id}
 GET /api/game/football-nfl/{event_id}
 ```
 
-Complete game summary (boxscore, play-by-play, leaders) from ESPN. The `event_id` is an ESPN event ID obtained from scoreboard responses.
+Complete game summary (boxscore, play-by-play, leaders, starting pitchers for MLB) from ESPN. The `event_id` is an ESPN event ID obtained from scoreboard responses.
 
 **Cache:** 45 seconds
 
@@ -142,11 +142,19 @@ Query params (scoreboard): `?dates=YYYY` for full season or `?dates=YYYYMMDD` fo
 ├── utils/
 │   ├── cache.py             # TTL cache tiers with async locks
 │   └── client.py            # Shared async HTTP client (singleton)
+├── schemas/
+│   └── game.py              # Pydantic response schemas (GameSchema, GameSummarySchema)
 └── tests/
     ├── conftest.py           # TestClient fixture
+    ├── fixtures/
+    │   └── espn_data.py      # Sample ESPN API response data for tests
     ├── test_endpoints.py     # Endpoint smoke tests
     ├── test_auto_discovery.py # Router discovery tests
-    └── test_models.py        # Model and code mapping tests
+    ├── test_models.py        # Model and code mapping tests
+    ├── test_schemas.py       # Pydantic schema serialization tests
+    ├── test_scoreboard_formatting.py  # ScoreboardService formatting tests
+    ├── test_game_formatting.py        # GameService formatting tests
+    └── test_api_contract.py  # API contract validation tests
 ```
 
 ### Key Design Decisions

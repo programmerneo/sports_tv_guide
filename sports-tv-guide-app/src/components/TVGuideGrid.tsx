@@ -193,13 +193,15 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
                               activeOpacity={0.7}
                             >
                               {isGolf ? (
-                                /* Golf: show tournament name */
+                                /* Golf: show tournament logo (or ⛳ fallback) + name */
                                 <View style={styles.teamRow}>
-                                  {game.homeTeam.logo && (
+                                  {game.homeTeam.logo ? (
                                     <Image
                                       source={{ uri: game.homeTeam.logo }}
                                       style={styles.teamLogo}
                                     />
+                                  ) : (
+                                    <Text style={{ fontSize: 14 }}>⛳</Text>
                                   )}
                                   <Text style={styles.teamName} numberOfLines={2}>
                                     {game.homeTeam.name}

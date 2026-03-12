@@ -100,6 +100,40 @@ def test_game_summary_schema_extends_game():
     assert data["leaders"] == [{"team": "Duke"}]
 
 
+def test_game_summary_schema_starting_pitchers():
+    """starting_pitchers serializes to startingPitchers and defaults to None."""
+    summary = GameSummarySchema(
+        id="401654321",
+        event_id="401654321",
+        sport="baseball-mlb",
+        home_team=TeamSchema(name="Braves", abbreviation="ATL"),
+        away_team=TeamSchema(name="Rays", abbreviation="TB"),
+        status="scheduled",
+        start_time="2025-07-10T23:10Z",
+        network="TBS",
+        starting_pitchers={
+            "home": {"name": "M. Fried"},
+            "away": {"name": "S. McClanahan"},
+        },
+    )
+    data = summary.model_dump(by_alias=True)
+    assert data["startingPitchers"]["home"]["name"] == "M. Fried"
+    assert data["startingPitchers"]["away"]["name"] == "S. McClanahan"
+
+    # Defaults to None when omitted
+    summary_no_sp = GameSummarySchema(
+        id="1",
+        event_id="1",
+        sport="basketball-college",
+        home_team=TeamSchema(name="A", abbreviation="A"),
+        away_team=TeamSchema(name="B", abbreviation="B"),
+        status="scheduled",
+        start_time="2025-01-01T00:00Z",
+        network="ESPN",
+    )
+    assert summary_no_sp.model_dump(by_alias=True)["startingPitchers"] is None
+
+
 def test_schedule_response_schema():
     response = ScheduleResponseSchema(
         games=[

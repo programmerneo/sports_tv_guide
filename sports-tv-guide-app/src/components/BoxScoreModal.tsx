@@ -396,6 +396,75 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
         </View>
       </View>
 
+      {/* Starting Pitchers (baseball only) */}
+      {game.sport === 'baseball-mlb' && gameSummary.startingPitchers &&
+        (gameSummary.startingPitchers.away || gameSummary.startingPitchers.home) && (
+          <View style={styles.pitchersSection}>
+            <Text style={styles.predictorTitle}>Starting Pitchers</Text>
+            <View style={styles.pitchersRow}>
+              {/* Away Pitcher */}
+              {gameSummary.startingPitchers.away ? (
+                <View style={styles.pitcherBox}>
+                  {gameSummary.startingPitchers.away.headshot && (
+                    <Image
+                      source={{ uri: gameSummary.startingPitchers.away.headshot }}
+                      style={styles.pitcherHeadshot}
+                    />
+                  )}
+                  <Text style={styles.pitcherName} numberOfLines={1}>
+                    {gameSummary.startingPitchers.away.shortName || gameSummary.startingPitchers.away.name}
+                  </Text>
+                  {gameSummary.startingPitchers.away.jersey && (
+                    <Text style={styles.pitcherJersey}>#{gameSummary.startingPitchers.away.jersey}</Text>
+                  )}
+                  <View style={styles.pitcherStats}>
+                    {gameSummary.startingPitchers.away.statistics.map((stat: { label: string; displayValue: string }) => (
+                      <Text key={stat.label} style={styles.pitcherStatText}>
+                        {stat.label}: {stat.displayValue}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.pitcherBox}>
+                  <Text style={styles.pitcherTBD}>TBD</Text>
+                </View>
+              )}
+
+              <Text style={styles.pitcherVs}>vs</Text>
+
+              {/* Home Pitcher */}
+              {gameSummary.startingPitchers.home ? (
+                <View style={styles.pitcherBox}>
+                  {gameSummary.startingPitchers.home.headshot && (
+                    <Image
+                      source={{ uri: gameSummary.startingPitchers.home.headshot }}
+                      style={styles.pitcherHeadshot}
+                    />
+                  )}
+                  <Text style={styles.pitcherName} numberOfLines={1}>
+                    {gameSummary.startingPitchers.home.shortName || gameSummary.startingPitchers.home.name}
+                  </Text>
+                  {gameSummary.startingPitchers.home.jersey && (
+                    <Text style={styles.pitcherJersey}>#{gameSummary.startingPitchers.home.jersey}</Text>
+                  )}
+                  <View style={styles.pitcherStats}>
+                    {gameSummary.startingPitchers.home.statistics.map((stat: { label: string; displayValue: string }) => (
+                      <Text key={stat.label} style={styles.pitcherStatText}>
+                        {stat.label}: {stat.displayValue}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.pitcherBox}>
+                  <Text style={styles.pitcherTBD}>TBD</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
+
       {/* Score Bar (completed) or Predictor Bar (scheduled/in-progress).
            Uses team colors from ESPN (hex without '#') with generic blue fallbacks. */}
       {game.status === 'completed' && game.awayScore != null && game.homeScore != null
@@ -786,6 +855,61 @@ const styles = StyleSheet.create({
   noLeaderboardSubtext: {
     fontSize: 13,
     color: COLORS.LIGHT_TEXT,
+  },
+
+  // ── Starting Pitchers (Baseball) ────────────────────────────────────────────
+  pitchersSection: {
+    backgroundColor: COLORS.WHITE,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+  },
+  pitchersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  pitcherBox: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  pitcherHeadshot: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginBottom: 6,
+  },
+  pitcherName: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: COLORS.DARK_TEXT,
+    textAlign: 'center',
+  },
+  pitcherJersey: {
+    fontSize: 11,
+    color: COLORS.LIGHT_TEXT,
+    marginTop: 2,
+  },
+  pitcherStats: {
+    marginTop: 6,
+    alignItems: 'center',
+  },
+  pitcherStatText: {
+    fontSize: 11,
+    color: COLORS.DARK_TEXT,
+    fontWeight: '500',
+  },
+  pitcherTBD: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.LIGHT_TEXT,
+  },
+  pitcherVs: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.LIGHT_TEXT,
+    marginHorizontal: 4,
   },
 
   // ── Game Score Section ──────────────────────────────────────────────────────

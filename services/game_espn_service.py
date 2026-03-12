@@ -164,6 +164,9 @@ class GameService:
             "odds": odds,
             "predictor": predictor,
             "boxScore": cls._parse_boxscore(data.get("boxscore")),
+            "startingPitchers": cls._parse_starting_pitchers(competitors)
+            if sport == "baseball-mlb"
+            else None,
             "plays": data.get("plays"),
             "leaders": data.get("leaders"),
         }
@@ -246,6 +249,63 @@ class GameService:
                 }
 
         return None
+
+    # Pitching stats to display for starting pitchers (in order).
+    _SP_DISPLAY_STATS = {"ERA", "W", "L", "WHIP", "K"}
+
+    @classmethod
+    def _parse_starting_pitchers(cls, competitors: list[dict]) -> dict | None:
+        """Parse probable/starting pitchers from ESPN competitors.
+
+        ESPN nests pitcher data under ``probables[].athlete`` with stats in
+        ``probables[].statistics.splits.categories[]``.  Each category has
+        ``abbreviation`` and ``displayValue``.
+
+        Args:
+            competitors: List of competitor dicts from
+                ``header.competitions[].competitors``.
+
+        Returns:
+            Dict with ``away`` and ``home`` pitcher info, or None if no
+            probable pitcher data is available.
+        """
+        result: dict[str, dict | None] = {"away": None, "home": None}
+        found = False
+        for competitor in competitors:
+            home_away = competitor.get("homeAway", "")
+            probables = competitor.get("probables", [])
+            if not probables:
+                continue
+            probable = probables[0]
+            athlete = probable.get("athlete", {})
+            if not athlete:
+                continue
+
+            # Stats live under statistics.splits.categories[]
+            stats_cats = (
+                probable.get("statistics", {}).get("splits", {}).get("categories", [])
+            )
+            headshot = athlete.get("headshot", {})
+            pitcher_info: dict = {
+                "name": athlete.get("displayName", ""),
+                "shortName": athlete.get("shortName", ""),
+                "headshot": headshot.get("href")
+                if isinstance(headshot, dict)
+                else headshot,
+                "jersey": athlete.get("jersey"),
+                "statistics": [
+                    {
+                        "label": s.get("abbreviation", s.get("name", "")),
+                        "displayValue": s.get("displayValue", ""),
+                    }
+                    for s in stats_cats
+                    if s.get("abbreviation") in cls._SP_DISPLAY_STATS
+                ],
+            }
+            result[home_away] = pitcher_info
+            found = True
+
+        return result if found else None
 
     @classmethod
     def _build_conference_lookup(cls, data: dict) -> dict[str, str]:

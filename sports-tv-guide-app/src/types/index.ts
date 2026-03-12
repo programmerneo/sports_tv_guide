@@ -61,8 +61,22 @@ export interface Game {
   };
 }
 
+export interface PitcherInfo {
+  name: string;
+  shortName: string;
+  headshot?: string;
+  jersey?: string;
+  statistics: StatEntry[];
+}
+
+export interface StartingPitchers {
+  away: PitcherInfo | null;
+  home: PitcherInfo | null;
+}
+
 export interface GameSummary extends Game {
   boxScore?: BoxScore;
+  startingPitchers?: StartingPitchers;
   plays?: Play[];
   leaders?: TeamLeaders;
   articles?: Article[];

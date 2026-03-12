@@ -153,6 +153,7 @@ describe('API contract: game summary schema', () => {
     expect(props).toContain('venueState');
     // Summary-only fields
     expect(props).toContain('boxScore');
+    expect(props).toContain('startingPitchers');
     expect(props).toContain('plays');
     expect(props).toContain('leaders');
   });
@@ -160,6 +161,7 @@ describe('API contract: game summary schema', () => {
   it('summary-only fields are optional (not required)', () => {
     const required = getRequiredFields(summarySchema);
     expect(required).not.toContain('boxScore');
+    expect(required).not.toContain('startingPitchers');
     expect(required).not.toContain('plays');
     expect(required).not.toContain('leaders');
   });

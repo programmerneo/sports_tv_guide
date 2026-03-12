@@ -66,6 +66,7 @@ export interface GameSummarySchema {
   odds?: OddsSchema | null;
   predictor?: PredictorSchema | null;
   boxScore?: Record<string, unknown> | null;
+  startingPitchers?: Record<string, unknown> | null;
   plays?: unknown[] | null;
   leaders?: unknown[] | null;
 }

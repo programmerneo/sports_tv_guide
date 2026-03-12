@@ -135,6 +135,18 @@
             "default": null,
             "title": "Logo"
           },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Color"
+          },
           "record": {
             "anyOf": [
               {
@@ -503,6 +515,18 @@
             "default": null,
             "title": "Logo"
           },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Color"
+          },
           "record": {
             "anyOf": [
               {
@@ -733,6 +757,19 @@
         ],
         "default": null,
         "title": "Boxscore"
+      },
+      "startingPitchers": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Startingpitchers"
       },
       "plays": {
         "anyOf": [
@@ -1086,6 +1123,18 @@
             "default": null,
             "title": "Logo"
           },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Color"
+          },
           "record": {
             "anyOf": [
               {
@@ -1191,6 +1240,18 @@
         ],
         "default": null,
         "title": "Logo"
+      },
+      "color": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Color"
       },
       "record": {
         "anyOf": [

@@ -91,43 +91,62 @@ const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }
                     </Text>
                   </View>
 
-                  <View style={styles.matchup}>
-                    <View style={styles.team}>
-                      {game.awayTeam.logo ? (
-                        <Image source={{ uri: game.awayTeam.logo }} style={styles.teamLogo} />
-                      ) : (
-                        <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
-                      )}
-                      <Text style={styles.teamName}>{game.awayTeam.abbreviation}</Text>
-                    </View>
-
-                    <Text style={styles.vs}>vs</Text>
-
-                    <View style={styles.team}>
-                      {game.homeTeam.logo ? (
-                        <Image source={{ uri: game.homeTeam.logo }} style={styles.teamLogo} />
-                      ) : (
-                        <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
-                      )}
-                      <Text style={styles.teamName}>{game.homeTeam.abbreviation}</Text>
-                    </View>
-                  </View>
-
-                  {game.status === 'in_progress' && (
-                    <View style={styles.liveScore}>
-                      <Text style={styles.score}>
-                        {game.awayScore} - {game.homeScore}
+                  {game.sport.startsWith('golf') ? (
+                    <View style={styles.golfMatchup}>
+                      <Text style={styles.golfEmoji}>⛳</Text>
+                      <Text style={styles.golfTournament} numberOfLines={2}>
+                        {game.homeTeam.name}
                       </Text>
-                      {game.statusDetail && <Text style={styles.quarter}>{game.statusDetail}</Text>}
+                    </View>
+                  ) : (
+                    <View style={styles.matchup}>
+                      <View style={styles.team}>
+                        {game.awayTeam.logo ? (
+                          <Image source={{ uri: game.awayTeam.logo }} style={styles.teamLogo} />
+                        ) : (
+                          <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                        )}
+                        <Text style={styles.teamName}>{game.awayTeam.abbreviation}</Text>
+                      </View>
+
+                      <Text style={styles.vs}>vs</Text>
+
+                      <View style={styles.team}>
+                        {game.homeTeam.logo ? (
+                          <Image source={{ uri: game.homeTeam.logo }} style={styles.teamLogo} />
+                        ) : (
+                          <Text style={styles.teamEmoji}>{SPORTS[game.sport]?.emoji || '🏆'}</Text>
+                        )}
+                        <Text style={styles.teamName}>{game.homeTeam.abbreviation}</Text>
+                      </View>
                     </View>
                   )}
-                  {game.status === 'completed' && (
-                    <View style={styles.finalScore}>
-                      <Text style={styles.score}>
-                        {game.awayScore} - {game.homeScore}
-                      </Text>
-                      <Text style={styles.finalLabel}>FINAL</Text>
+
+                  {game.sport.startsWith('golf') ? (
+                    <View style={styles.liveScore}>
+                      <Text style={styles.score}>View</Text>
                     </View>
+                  ) : (
+                    <>
+                      {game.status === 'in_progress' && (
+                        <View style={styles.liveScore}>
+                          <Text style={styles.score}>
+                            {game.awayScore} - {game.homeScore}
+                          </Text>
+                          {game.statusDetail && (
+                            <Text style={styles.quarter}>{game.statusDetail}</Text>
+                          )}
+                        </View>
+                      )}
+                      {game.status === 'completed' && (
+                        <View style={styles.finalScore}>
+                          <Text style={styles.score}>
+                            {game.awayScore} - {game.homeScore}
+                          </Text>
+                          <Text style={styles.finalLabel}>FINAL</Text>
+                        </View>
+                      )}
+                    </>
                   )}
                 </TouchableOpacity>
               ))}
@@ -224,6 +243,20 @@ const styles = StyleSheet.create({
   countdownLive: {
     color: COLORS.LIVE_RED,
     backgroundColor: '#fff0f0',
+  },
+  golfMatchup: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  golfEmoji: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  golfTournament: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.DARK_TEXT,
+    textAlign: 'center',
   },
   matchup: {
     flexDirection: 'row',
