@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from schemas.codes import get_season_year
+from services.bracket_service import BracketService
 from utils.cache import cache_5m, cached_json_response
 from utils.client import get_client
 
@@ -26,7 +26,9 @@ async def brackets(year: int | None = None):
     Query params:
         year: Season year (optional, defaults to current season).
     """
-    season_year = year or get_season_year(datetime.now(timezone.utc))
+    # The NCAA bracket API uses the championship year (e.g. 2026 for March 2026),
+    # not the season start year. Use the current calendar year as the default.
+    season_year = year or datetime.now(timezone.utc).year
     cache_key = f"/brackets/{_SPORT}/d1/{season_year}"
 
     variables = {
@@ -57,7 +59,7 @@ async def brackets(year: int | None = None):
         data = resp.json()
         if not data.get("data", {}).get("championships"):
             raise HTTPException(status_code=404, detail="Resource not found")
-        return data["data"]
+        return BracketService.format_bracket(data["data"])
 
     return await cached_json_response(
         cache=cache_5m,

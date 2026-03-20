@@ -2,21 +2,38 @@
  * Sport Tabs - Filter games by sport type
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 
 import { SportType } from '@types/index';
 import { SPORTS, COLORS } from '@constants/index';
 import { useGameStore } from '@store/gameStore';
 
+/** March Madness season window: March 14 – April 10. */
+function isMarchMadnessSeason(): boolean {
+  const now = new Date();
+  const month = now.getMonth(); // 0-indexed: 2 = March, 3 = April
+  const day = now.getDate();
+
+  if (month === 2 && day >= 14) return true; // March 14+
+  if (month === 3 && day <= 10) return true; // through April 10
+  return false;
+}
+
 interface SportTabsProps {
   selectedSport: SportType | null;
   onSelectSport: (sport: SportType | null) => void;
+  onBracketPress?: () => void;
 }
 
-const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport }) => {
+const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onBracketPress }) => {
   const preferences = useGameStore((state) => state.preferences);
   const games = useGameStore((state) => state.games);
+
+  const showBracket = useMemo(
+    () => isMarchMadnessSeason() && onBracketPress != null,
+    [onBracketPress]
+  );
 
   // Only show sports that have events for the day
   const sportsWithGames = preferences.selectedSports.filter((sport) => {
@@ -24,13 +41,20 @@ const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport }) =
     return sportGames && sportGames.length > 0;
   });
 
-  // If only one sport has games, no need for tabs
-  if (sportsWithGames.length <= 1) {
+  // If only one sport has games and no bracket, no need for tabs
+  if (sportsWithGames.length <= 1 && !showBracket) {
     return null;
   }
 
   return (
     <View style={styles.container}>
+      {showBracket && (
+        <TouchableOpacity style={styles.bracketTab} onPress={onBracketPress} activeOpacity={0.7}>
+          <Text style={styles.bracketIcon}>&#x1F3C0;</Text>
+          <Text style={styles.bracketText}>Bracket</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={[styles.tab, selectedSport === null && styles.tabActive]}
         onPress={() => onSelectSport(null)}
@@ -84,6 +108,24 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingRight: 8,
   },
+  bracketTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#1A3358',
+    marginRight: 20,
+    gap: 4,
+  },
+  bracketIcon: {
+    fontSize: 12,
+  },
+  bracketText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#C8991D',
+  },
   tab: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -101,7 +143,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: COLORS.LIGHT_TEXT,
-    whiteSpace: 'nowrap',
   },
   tabTextActive: {
     color: COLORS.WHITE,

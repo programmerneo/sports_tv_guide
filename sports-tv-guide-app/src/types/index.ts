@@ -186,3 +186,52 @@ export interface UserPreferences {
   darkModeEnabled: boolean;
   selectedSports: SportType[];
 }
+
+// --- March Madness Bracket Types (pre-parsed by backend) ---
+
+export interface BracketTeam {
+  isHome: boolean;
+  isTop: boolean;
+  isWinner: boolean;
+  logoUrl: string;
+  score: number | null;
+  seed: number | null;
+  nameShort: string;
+  nameFull: string;
+}
+
+export interface BracketGame {
+  contestId: number;
+  bracketPositionId: number;
+  contestClock: string;
+  currentPeriod: string;
+  gameState: string; // 'F' = final, 'I' = in-progress, 'P' = pre-game
+  hasStartTime: boolean;
+  startTime: string;
+  startTimeEpoch: number;
+  teams: BracketTeam[];
+  broadcaster: { name: string } | null;
+}
+
+export interface BracketRoundColumn {
+  label: string;
+  subtitle: string;
+  games: BracketGame[];
+}
+
+export interface BracketTab {
+  sectionId: number;
+  label: string;
+  regionCode: string;
+  isEnabled: boolean;
+  liveCount: number;
+  rounds: BracketRoundColumn[];
+}
+
+export interface BracketResponse {
+  title: string;
+  year: number;
+  championshipInfo: string | null;
+  defaultTabSectionId: number | null;
+  tabs: BracketTab[];
+}

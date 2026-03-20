@@ -1338,5 +1338,265 @@
     },
     "title": "OddsSchema",
     "type": "object"
+  },
+  "bracket": {
+    "$defs": {
+      "BracketBroadcasterSchema": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "BracketBroadcasterSchema",
+        "type": "object"
+      },
+      "BracketGameSchema": {
+        "properties": {
+          "contestId": {
+            "title": "Contestid",
+            "type": "integer"
+          },
+          "bracketPositionId": {
+            "title": "Bracketpositionid",
+            "type": "integer"
+          },
+          "gameState": {
+            "title": "Gamestate",
+            "type": "string"
+          },
+          "contestClock": {
+            "default": "",
+            "title": "Contestclock",
+            "type": "string"
+          },
+          "currentPeriod": {
+            "default": "",
+            "title": "Currentperiod",
+            "type": "string"
+          },
+          "hasStartTime": {
+            "default": false,
+            "title": "Hasstarttime",
+            "type": "boolean"
+          },
+          "startTime": {
+            "default": "",
+            "title": "Starttime",
+            "type": "string"
+          },
+          "startTimeEpoch": {
+            "default": 0,
+            "title": "Starttimeepoch",
+            "type": "integer"
+          },
+          "teams": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/BracketTeamSchema"
+            },
+            "title": "Teams",
+            "type": "array"
+          },
+          "broadcaster": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/BracketBroadcasterSchema"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "contestId",
+          "bracketPositionId",
+          "gameState"
+        ],
+        "title": "BracketGameSchema",
+        "type": "object"
+      },
+      "BracketRoundColumn": {
+        "description": "A column of games within a bracket view (one round).",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "subtitle": {
+            "default": "",
+            "title": "Subtitle",
+            "type": "string"
+          },
+          "games": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/BracketGameSchema"
+            },
+            "title": "Games",
+            "type": "array"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "BracketRoundColumn",
+        "type": "object"
+      },
+      "BracketTabSchema": {
+        "description": "A region/section tab in the bracket UI.",
+        "properties": {
+          "sectionId": {
+            "title": "Sectionid",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "regionCode": {
+            "title": "Regioncode",
+            "type": "string"
+          },
+          "isEnabled": {
+            "default": false,
+            "title": "Isenabled",
+            "type": "boolean"
+          },
+          "liveCount": {
+            "default": 0,
+            "title": "Livecount",
+            "type": "integer"
+          },
+          "rounds": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/BracketRoundColumn"
+            },
+            "title": "Rounds",
+            "type": "array"
+          }
+        },
+        "required": [
+          "sectionId",
+          "label",
+          "regionCode"
+        ],
+        "title": "BracketTabSchema",
+        "type": "object"
+      },
+      "BracketTeamSchema": {
+        "properties": {
+          "isHome": {
+            "default": false,
+            "title": "Ishome",
+            "type": "boolean"
+          },
+          "isTop": {
+            "default": false,
+            "title": "Istop",
+            "type": "boolean"
+          },
+          "isWinner": {
+            "default": false,
+            "title": "Iswinner",
+            "type": "boolean"
+          },
+          "logoUrl": {
+            "default": "",
+            "title": "Logourl",
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Score"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Seed"
+          },
+          "nameShort": {
+            "default": "",
+            "title": "Nameshort",
+            "type": "string"
+          },
+          "nameFull": {
+            "default": "",
+            "title": "Namefull",
+            "type": "string"
+          }
+        },
+        "title": "BracketTeamSchema",
+        "type": "object"
+      }
+    },
+    "description": "Top-level bracket response with all data pre-parsed for the frontend.",
+    "properties": {
+      "title": {
+        "default": "",
+        "title": "Title",
+        "type": "string"
+      },
+      "year": {
+        "default": 0,
+        "title": "Year",
+        "type": "integer"
+      },
+      "championshipInfo": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Championshipinfo"
+      },
+      "defaultTabSectionId": {
+        "anyOf": [
+          {
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Defaulttabsectionid"
+      },
+      "tabs": {
+        "default": [],
+        "items": {
+          "$ref": "#/$defs/BracketTabSchema"
+        },
+        "title": "Tabs",
+        "type": "array"
+      }
+    },
+    "title": "BracketResponseSchema",
+    "type": "object"
   }
 }

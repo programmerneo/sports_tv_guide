@@ -218,6 +218,116 @@ describe('getMultipleSports', () => {
   });
 });
 
+// Sample pre-formatted bracket data (as returned by backend)
+const SAMPLE_BRACKET_RESPONSE = {
+  title: "NCAA Division I Men's Basketball Championship 2026",
+  year: 2026,
+  championshipInfo: 'National Championship\nTBS',
+  defaultTabSectionId: 2,
+  tabs: [
+    {
+      sectionId: 1,
+      label: 'East',
+      regionCode: 'E',
+      isEnabled: true,
+      liveCount: 0,
+      rounds: [
+        {
+          label: 'First Round',
+          subtitle: 'Mar 20-21',
+          games: [
+            {
+              contestId: 101,
+              bracketPositionId: 201,
+              gameState: 'F',
+              contestClock: '',
+              currentPeriod: '',
+              hasStartTime: true,
+              startTime: '7:00 PM ET',
+              startTimeEpoch: 1711000000,
+              teams: [
+                { isHome: false, isTop: true, isWinner: true, logoUrl: '', score: 85, seed: 1, nameShort: 'Duke', nameFull: 'Duke Blue Devils' },
+                { isHome: true, isTop: false, isWinner: false, logoUrl: '', score: 78, seed: 8, nameShort: 'UNC', nameFull: 'North Carolina Tar Heels' },
+              ],
+              broadcaster: null,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+describe('getBrackets', () => {
+  it('returns bracket data from backend response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAMPLE_BRACKET_RESPONSE,
+      text: async () => '',
+    });
+
+    const result = await apiService.getBrackets();
+
+    expect(result.title).toBe("NCAA Division I Men's Basketball Championship 2026");
+    expect(result.year).toBe(2026);
+    expect(result.tabs).toHaveLength(1);
+    expect(result.tabs[0].label).toBe('East');
+    expect(result.tabs[0].rounds[0].games[0].teams).toHaveLength(2);
+    expect(result.defaultTabSectionId).toBe(2);
+    expect(result.championshipInfo).toContain('TBS');
+  });
+
+  it('passes year parameter when provided', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAMPLE_BRACKET_RESPONSE,
+      text: async () => '',
+    });
+
+    await apiService.getBrackets(2025);
+
+    const calledUrl = mockFetch.mock.calls[0][0];
+    expect(calledUrl).toContain('year=2025');
+  });
+
+  it('omits year parameter when not provided', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAMPLE_BRACKET_RESPONSE,
+      text: async () => '',
+    });
+
+    await apiService.getBrackets();
+
+    const calledUrl = mockFetch.mock.calls[0][0];
+    expect(calledUrl).not.toContain('year=');
+  });
+
+  it('uses cached data on subsequent calls', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => SAMPLE_BRACKET_RESPONSE,
+      text: async () => '',
+    });
+
+    await apiService.getBrackets();
+    const result = await apiService.getBrackets();
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(result.title).toBe("NCAA Division I Men's Basketball Championship 2026");
+  });
+
+  it('throws on HTTP error', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    });
+
+    await expect(apiService.getBrackets()).rejects.toThrow('HTTP 500');
+  });
+});
+
 describe('cache management', () => {
   it('clearCache removes all cached data', async () => {
     mockFetch.mockResolvedValue({

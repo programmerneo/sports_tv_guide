@@ -10,6 +10,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from '@screens/HomeScreen';
+import BracketScreen from '@screens/BracketScreen';
 import FavoritesScreen from '@screens/FavoritesScreen';
 import SearchScreen from '@screens/SearchScreen';
 import NotificationsScreen from '@screens/NotificationsScreen';
@@ -32,6 +33,7 @@ function HomeStack() {
       }}
     >
       <Stack.Screen name="HomeMain" component={HomeScreen} />
+      <Stack.Screen name="Bracket" component={BracketScreen} />
     </Stack.Navigator>
   );
 }

@@ -3,7 +3,7 @@
  */
 
 import { API_BASE_URL, API_TIMEOUT, CACHE_DURATION as CacheDuration } from '@constants/index';
-import { Game, GameSummary, GolfLeaderboard, SportType } from '@types/index';
+import { BracketResponse, Game, GameSummary, GolfLeaderboard, SportType } from '@types/index';
 
 interface CacheEntry<T> {
   data: T;
@@ -149,6 +149,29 @@ class ApiService {
       return leaderboard;
     } catch (error) {
       console.error(`Failed to fetch golf leaderboard for ${eventId}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch March Madness bracket data
+   */
+  async getBrackets(year?: number): Promise<BracketResponse> {
+    const cacheKey = `brackets:${year || 'current'}`;
+
+    const cached = this.getCachedData<BracketResponse>(cacheKey, CacheDuration.STANDINGS);
+    if (cached) return cached;
+
+    try {
+      const params = year ? `?year=${year}` : '';
+      const url = `${API_BASE_URL}/api/march-madness/brackets${params}`;
+      const response = await this.fetchWithTimeout(url);
+      const data: BracketResponse = await response.json();
+
+      this.setCacheData(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error('Failed to fetch brackets:', error);
       throw error;
     }
   }

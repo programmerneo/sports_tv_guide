@@ -20,6 +20,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from schemas.bracket import BracketResponseSchema  # noqa: E402
 from schemas.game import (  # noqa: E402
     GameSchema,
     GameSummarySchema,
@@ -184,6 +185,7 @@ def main() -> None:
         "schedule": ScheduleResponseSchema.model_json_schema(),
         "team": TeamSchema.model_json_schema(),
         "odds": OddsSchema.model_json_schema(),
+        "bracket": BracketResponseSchema.model_json_schema(),
     }
     json_schema_path.write_text(json.dumps(contract, indent=2) + "\n")
     print(f"Generated {json_schema_path.relative_to(PROJECT_ROOT)}")

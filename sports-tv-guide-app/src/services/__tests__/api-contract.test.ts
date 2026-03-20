@@ -140,6 +140,96 @@ describe('API contract: odds schema', () => {
   });
 });
 
+describe('API contract: bracket response schema', () => {
+  const bracketSchema = contract.bracket as Record<string, unknown>;
+
+  it('has all top-level properties the frontend depends on', () => {
+    const props = getSchemaProperties(bracketSchema);
+    const expectedProps = ['title', 'year', 'championshipInfo', 'defaultTabSectionId', 'tabs'];
+    for (const prop of expectedProps) {
+      expect(props).toContain(prop);
+    }
+  });
+
+  it('title and year are not required (have defaults)', () => {
+    const required = getRequiredFields(bracketSchema);
+    expect(required).not.toContain('title');
+    expect(required).not.toContain('year');
+  });
+
+  it('tabs is an array', () => {
+    const props = (bracketSchema.properties as Record<string, unknown>);
+    const tabs = props.tabs as Record<string, unknown>;
+    expect(tabs.type).toBe('array');
+  });
+});
+
+describe('API contract: bracket tab schema', () => {
+  const bracketSchema = contract.bracket as Record<string, unknown>;
+  const tabSchema = resolveDef(bracketSchema, 'BracketTabSchema');
+
+  it('has all tab properties the frontend reads', () => {
+    const props = getSchemaProperties(tabSchema);
+    const expectedProps = ['sectionId', 'label', 'regionCode', 'isEnabled', 'liveCount', 'rounds'];
+    for (const prop of expectedProps) {
+      expect(props).toContain(prop);
+    }
+  });
+
+  it('sectionId, label, and regionCode are required', () => {
+    const required = getRequiredFields(tabSchema);
+    expect(required).toContain('sectionId');
+    expect(required).toContain('label');
+    expect(required).toContain('regionCode');
+  });
+});
+
+describe('API contract: bracket game schema', () => {
+  const bracketSchema = contract.bracket as Record<string, unknown>;
+  const gameSchema = resolveDef(bracketSchema, 'BracketGameSchema');
+
+  it('has all game properties the frontend reads', () => {
+    const props = getSchemaProperties(gameSchema);
+    const expectedProps = [
+      'contestId', 'bracketPositionId', 'gameState', 'contestClock',
+      'currentPeriod', 'hasStartTime', 'startTime', 'startTimeEpoch',
+      'teams', 'broadcaster',
+    ];
+    for (const prop of expectedProps) {
+      expect(props).toContain(prop);
+    }
+  });
+
+  it('contestId, bracketPositionId, and gameState are required', () => {
+    const required = getRequiredFields(gameSchema);
+    expect(required).toContain('contestId');
+    expect(required).toContain('bracketPositionId');
+    expect(required).toContain('gameState');
+  });
+});
+
+describe('API contract: bracket team schema', () => {
+  const bracketSchema = contract.bracket as Record<string, unknown>;
+  const teamSchema = resolveDef(bracketSchema, 'BracketTeamSchema');
+
+  it('has all team properties the frontend reads', () => {
+    const props = getSchemaProperties(teamSchema);
+    const expectedProps = ['isHome', 'isTop', 'isWinner', 'logoUrl', 'score', 'seed', 'nameShort', 'nameFull'];
+    for (const prop of expectedProps) {
+      expect(props).toContain(prop);
+    }
+  });
+
+  it('score is integer|null', () => {
+    const props = (teamSchema.properties as Record<string, unknown>);
+    const score = props.score as Record<string, unknown>;
+    const anyOf = score.anyOf as Array<Record<string, unknown>>;
+    const types = anyOf.map((v: Record<string, unknown>) => v.type);
+    expect(types).toContain('integer');
+    expect(types).toContain('null');
+  });
+});
+
 describe('API contract: game summary schema', () => {
   const summarySchema = contract.gameSummary as Record<string, unknown>;
 

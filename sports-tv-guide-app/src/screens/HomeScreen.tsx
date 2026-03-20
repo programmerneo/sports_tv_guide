@@ -6,7 +6,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet, Text, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { apiService } from '@services/api';
 import { useGameStore, getAllGames, getLiveGames } from '@store/gameStore';
@@ -20,6 +20,7 @@ import EmptyState from '@components/EmptyState';
 import tvIcon from '../../assets/images/tv-icon.png';
 
 const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
   const { games, setGames, loading, setLoading, error, setError, preferences, clearCache } =
     useGameStore();
 
@@ -147,7 +148,11 @@ const HomeScreen: React.FC = () => {
         <InProgressTodaySection games={getLiveGames(useGameStore.getState())} />
 
         {/* Sport Type Tabs */}
-        <SportTabs selectedSport={filteredSport} onSelectSport={setFilteredSport} />
+        <SportTabs
+          selectedSport={filteredSport}
+          onSelectSport={setFilteredSport}
+          onBracketPress={() => navigation.navigate('Bracket')}
+        />
 
         {/* TV Guide Grid or filtered empty state */}
         {displayGames.length > 0 ? (
