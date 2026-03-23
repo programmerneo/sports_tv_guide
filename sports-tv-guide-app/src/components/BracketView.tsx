@@ -275,6 +275,13 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
 
   const activeRegion = bracketData?.tabs.find((t) => t.sectionId === activeTab);
 
+  // Hide the First Four tab once all its play-in games are finished
+  const visibleTabs = (bracketData?.tabs || []).filter((tab) => {
+    if (tab.regionCode !== FIRST_FOUR_CODE) return true;
+    const allGames = tab.rounds.flatMap((r) => r.games);
+    return allGames.length === 0 || allGames.some((g) => !isFinal(g));
+  });
+
   // --- Render Helpers ---
 
   const renderRounds = (tab: BracketTab) => {
@@ -285,7 +292,7 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
     return (
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator
         contentContainerStyle={styles.bracketScroll}
       >
         {tab.rounds.map((round, rIdx) => (
@@ -412,11 +419,11 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
       {/* Region Tabs */}
       <ScrollView
         horizontal
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator
         style={styles.tabBarContainer}
         contentContainerStyle={styles.tabBar}
       >
-        {(bracketData?.tabs || []).map((tab) => {
+        {visibleTabs.map((tab) => {
           const isActive = activeTab === tab.sectionId;
           return (
             <TouchableOpacity
@@ -450,7 +457,7 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
       <ScrollView
         style={styles.contentScroll}
         contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator
       >
         {renderContent()}
       </ScrollView>
@@ -533,7 +540,7 @@ const styles = StyleSheet.create({
 
   // Tabs
   tabBarContainer: {
-    maxHeight: 28,
+    maxHeight: 40,
     backgroundColor: BRACKET_COLORS.NAVY_MID,
   },
   tabBar: {
@@ -707,6 +714,7 @@ const styles = StyleSheet.create({
   },
   teamNameWinner: {
     fontWeight: '800',
+    color: BRACKET_COLORS.FINAL_BADGE,
   },
   scoreText: {
     fontSize: 12,
