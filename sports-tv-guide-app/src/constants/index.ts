@@ -2,10 +2,25 @@
  * Application constants
  */
 
+import { Platform } from 'react-native';
 import { SportType } from '@types/index';
 
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
-export const API_TIMEOUT = 10000; // 10 seconds
+const getApiBaseUrl = () => {
+  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
+
+  // FastAPI dev mode defaults to 8000.
+  // Change this to '3000' only if you are running 'uv run ncaa-api' or 'python main.py'
+  const port = '8000';
+
+  if (Platform.OS === 'android') {
+    return `http://10.0.2.2:${port}`;
+  }
+
+  return `http://localhost:${port}`;
+};
+
+export const API_BASE_URL = getApiBaseUrl();
+export const API_TIMEOUT = 10000;
 
 export const SPORTS: Record<SportType, { label: string; emoji: string; displayName: string }> = {
   'basketball-college': { label: '🏀', emoji: '🏀', displayName: 'NCAAB' },
@@ -39,10 +54,10 @@ export const NETWORK_LOGOS: Record<string, string> = {
 };
 
 export const CACHE_DURATION = {
-  SCHEDULE: 30 * 1000, // 30 seconds (matching refresh interval)
-  GAME_SUMMARY: 60 * 1000, // 60 seconds (matching backend)
-  STANDINGS: 5 * 60 * 1000, // 5 minutes
-  PREFERENCES: 24 * 60 * 60 * 1000, // 24 hours
+  SCHEDULE: 30 * 1000,
+  GAME_SUMMARY: 60 * 1000,
+  STANDINGS: 5 * 60 * 1000,
+  PREFERENCES: 24 * 60 * 60 * 1000,
 };
 
 export const GAME_STATUS = {
@@ -104,40 +119,11 @@ export const DEFAULT_USER_PREFERENCES = {
 };
 
 export const TIME_SLOTS = [
-  '7:00 AM',
-  '7:30 AM',
-  '8:00 AM',
-  '8:30 AM',
-  '9:00 AM',
-  '9:30 AM',
-  '10:00 AM',
-  '10:30 AM',
-  '11:00 AM',
-  '11:30 AM',
-  '12:00 PM',
-  '12:30 PM',
-  '1:00 PM',
-  '1:30 PM',
-  '2:00 PM',
-  '2:30 PM',
-  '3:00 PM',
-  '3:30 PM',
-  '4:00 PM',
-  '4:30 PM',
-  '5:00 PM',
-  '5:30 PM',
-  '6:00 PM',
-  '6:30 PM',
-  '7:00 PM',
-  '7:30 PM',
-  '8:00 PM',
-  '8:30 PM',
-  '9:00 PM',
-  '9:30 PM',
-  '10:00 PM',
-  '10:30 PM',
-  '11:00 PM',
-  '11:30 PM',
+  '7:00 AM', '7:30 AM', '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM',
+  '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
+  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM',
+  '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM', '9:30 PM', '10:00 PM', '10:30 PM',
+  '11:00 PM', '11:30 PM',
 ];
 
-export const GAME_REFRESH_INTERVAL = 30 * 1000; // 30 seconds for live games
+export const GAME_REFRESH_INTERVAL = 30 * 1000;

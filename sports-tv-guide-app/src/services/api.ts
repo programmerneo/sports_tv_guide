@@ -12,7 +12,6 @@ interface CacheEntry<T> {
 
 class ApiService {
   private cache = new Map<string, CacheEntry<unknown>>();
-  private requestTimeouts = new Map<string, NodeJS.Timeout>();
 
   /**
    * Format date for API requests (YYYYMMDD format)
@@ -61,17 +60,32 @@ class ApiService {
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
     try {
-      const response = await fetch(url, {
+      // Ensure we don't have double slashes if API_BASE_URL ends with one
+      const cleanUrl = url.replace(/([^:]\/)\/+/g, '$1');
+      console.log(`[API] Fetching: ${cleanUrl}`);
+
+      const response = await fetch(cleanUrl, {
         ...options,
         signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...options?.headers,
+        },
       });
 
       if (!response.ok) {
         const errorText = await response.text();
+        console.error(`[API] HTTP Error ${response.status}: ${errorText}`);
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       return response;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('Request timed out');
+      }
+      throw err;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -84,21 +98,16 @@ class ApiService {
     const formattedDate = this.formatDate(date);
     const cacheKey = `schedule:${sport}:${formattedDate}`;
 
-    // Check cache first
     const cached = this.getCachedData<Game[]>(cacheKey, CacheDuration.SCHEDULE);
     if (cached) return cached;
 
     try {
-      const params = new URLSearchParams({
-        date: formattedDate,
-      });
-
+      const params = new URLSearchParams({ date: formattedDate });
       const url = `${API_BASE_URL}/api/schedule/${sport}?${params}`;
       const response = await this.fetchWithTimeout(url);
       const data = await response.json();
 
       const games: Game[] = data.games || [];
-
       this.setCacheData(cacheKey, games);
       return games;
     } catch (error) {
@@ -108,12 +117,11 @@ class ApiService {
   }
 
   /**
-   * Fetch game summary with boxscore and play-by-play
+   * Fetch game summary
    */
   async getGameSummary(sport: SportType, eventId: string): Promise<GameSummary> {
     const cacheKey = `game:${sport}:${eventId}`;
 
-    // Check cache first
     const cached = this.getCachedData<GameSummary>(cacheKey, CacheDuration.GAME_SUMMARY);
     if (cached) return cached;
 
@@ -121,9 +129,7 @@ class ApiService {
       const url = `${API_BASE_URL}/api/game/${sport}/${eventId}`;
       const response = await this.fetchWithTimeout(url);
       const gameSummary: GameSummary = await response.json();
-
       this.setCacheData(cacheKey, gameSummary);
-
       return gameSummary;
     } catch (error) {
       console.error(`Failed to fetch game summary for ${eventId}:`, error);
@@ -132,7 +138,7 @@ class ApiService {
   }
 
   /**
-   * Fetch golf leaderboard (top 30) for a tournament
+   * Fetch golf leaderboard
    */
   async getGolfLeaderboard(eventId: string): Promise<GolfLeaderboard> {
     const cacheKey = `golf-leaderboard:${eventId}`;
@@ -144,7 +150,6 @@ class ApiService {
       const url = `${API_BASE_URL}/api/golf/pga/leaderboard/${eventId}`;
       const response = await this.fetchWithTimeout(url);
       const leaderboard: GolfLeaderboard = await response.json();
-
       this.setCacheData(cacheKey, leaderboard);
       return leaderboard;
     } catch (error) {
@@ -167,7 +172,6 @@ class ApiService {
       const url = `${API_BASE_URL}/api/march-madness/brackets${params}`;
       const response = await this.fetchWithTimeout(url);
       const data: BracketResponse = await response.json();
-
       this.setCacheData(cacheKey, data);
       return data;
     } catch (error) {
@@ -229,5 +233,4 @@ class ApiService {
   }
 }
 
-// Export singleton instance
 export const apiService = new ApiService();
