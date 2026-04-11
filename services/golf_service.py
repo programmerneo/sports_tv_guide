@@ -19,9 +19,19 @@ logger = logging.getLogger(__name__)
 LEADERBOARD_LIMIT = 30
 CORE_API_BASE = "https://sports.core.api.espn.com/v2/sports"
 
-
 class GolfService:
     """Service for golf-specific data formatting."""
+
+    @classmethod
+    def _extract_tee_time(cls, val: str | None) -> str | None:
+        """Return val if it is an ISO datetime string (tee time), else None."""
+        if not val:
+            return None
+        try:
+            datetime.fromisoformat(str(val).replace("Z", "+00:00"))
+            return str(val)
+        except ValueError:
+            return None
 
     @classmethod
     async def fetch_schedule(cls, date: str | None = None) -> dict:
@@ -214,10 +224,18 @@ class GolfService:
             hole = status.get("hole")
             state = status.get("type", {}).get("state", "")
 
+            today_raw = status.get("displayValue", "")
+            tee_time = cls._extract_tee_time(today_raw)
+
             if state == "post":
                 thru_display = "F"
             elif thru is not None:
-                thru_display = str(thru)
+                thru_tee = cls._extract_tee_time(str(thru))
+                if thru_tee:
+                    tee_time = thru_tee
+                    thru_display = "-"
+                else:
+                    thru_display = str(thru)
             elif hole is not None:
                 thru_display = str(hole)
             else:
@@ -243,8 +261,9 @@ class GolfService:
                 "totalScore": score.get("displayValue", "E"),
                 "totalStrokes": total_strokes if has_completed_round else None,
                 "toPar": score.get("displayValue", "E"),
-                "today": status.get("displayValue", ""),
+                "today": "-" if tee_time else today_raw,
                 "thru": thru_display,
+                "teeTime": tee_time,
                 "rounds": rounds,
             }
 
@@ -410,6 +429,10 @@ class GolfService:
                     total_strokes += int(value)
                     has_completed_round = True
 
+            today_raw = entry.get("status", {}).get("displayValue", "")
+            detail = entry.get("status", {}).get("detail", "")
+            tee_time = cls._extract_tee_time(today_raw) or cls._extract_tee_time(detail)
+
             leaderboard.append(
                 {
                     "position": entry.get("status", {})
@@ -424,8 +447,9 @@ class GolfService:
                     "toPar": entry.get("statistics", [{}])[0].get("displayValue", "E")
                     if stats
                     else "E",
-                    "today": entry.get("status", {}).get("displayValue", ""),
-                    "thru": entry.get("status", {}).get("detail", ""),
+                    "today": "-" if tee_time else today_raw,
+                    "thru": "-" if tee_time else detail,
+                    "teeTime": tee_time,
                     "rounds": rounds,
                 }
             )

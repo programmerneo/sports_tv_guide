@@ -291,7 +291,9 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
                     {entry.totalScore}
                   </Text>
                   <Text style={[styles.leaderboardCell, styles.lbToday]}>{entry.today || '-'}</Text>
-                  <Text style={[styles.leaderboardCell, styles.lbThru]}>{entry.thru || '-'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbThru]}>
+                    {entry.teeTime ? formatTime(entry.teeTime) : entry.thru || '-'}
+                  </Text>
                   <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[0] || '--'}</Text>
                   <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[1] || '--'}</Text>
                   <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[2] || '--'}</Text>

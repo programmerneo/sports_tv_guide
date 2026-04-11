@@ -152,6 +152,7 @@ export interface GolfLeaderboardEntry {
   toPar: string;
   today: string;
   thru: string;
+  teeTime?: string | null;
   rounds: string[];
 }
 
