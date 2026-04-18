@@ -50,13 +50,11 @@ class BracketService:
 
             # Build round columns for this tab
             if region_code == FINAL_FOUR_CODE:
-                round_columns = cls._build_final_four_rounds(
-                    games, section_id, rounds)
+                round_columns = cls._build_final_four_rounds(games, section_id, rounds)
             elif region_code == FIRST_FOUR_CODE:
                 round_columns = cls._build_first_four_rounds(games, section_id)
             else:
-                round_columns = cls._build_region_rounds(
-                    games, section_id, rounds)
+                round_columns = cls._build_region_rounds(games, section_id, rounds)
 
             tabs.append(
                 {
@@ -113,7 +111,9 @@ class BracketService:
             # Enable for scheduled games that have real teams (not TBD)
             elif game_state == "P":
                 teams = game.get("teams", [])
-                if teams and any(team.get("nameShort") not in ("", "TBD") for team in teams):
+                if teams and any(
+                    team.get("nameShort") not in ("", "TBD") for team in teams
+                ):
                     enabled.add(game["sectionId"])
         return enabled
 
@@ -246,8 +246,7 @@ class BracketService:
             [g for g in games if g["sectionId"] == section_id],
             key=lambda g: g["bracketPositionId"],
         )
-        semis = [g for g in section_games if 600 <=
-                 g["bracketPositionId"] < 700]
+        semis = [g for g in section_games if 600 <= g["bracketPositionId"] < 700]
         final = [g for g in section_games if g["bracketPositionId"] >= 700]
 
         result = []
@@ -307,8 +306,7 @@ class BracketService:
         cls, champ: dict, games: list[dict], rounds: list[dict]
     ) -> str | None:
         """Build championship game info string for the header subtitle."""
-        champ_round = next(
-            (r for r in rounds if r.get("roundNumber") == 7), None)
+        champ_round = next((r for r in rounds if r.get("roundNumber") == 7), None)
         if not champ_round:
             return None
 

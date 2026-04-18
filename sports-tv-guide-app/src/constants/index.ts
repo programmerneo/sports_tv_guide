@@ -26,7 +26,7 @@ export const SPORTS: Record<SportType, { label: string; emoji: string; displayNa
   'basketball-college': { label: '🏀', emoji: '🏀', displayName: 'NCAAB' },
   'football-college': { label: '🏈', emoji: '🏈', displayName: 'NCAAF' },
   'football-nfl': { label: '🏈', emoji: '🏈', displayName: 'NFL' },
-  'golf-pga': { label: '⛳', emoji: '⛳', displayName: 'PGA Golf' },
+  'golf-pga': { label: '⛳', emoji: '⛳', displayName: 'Golf' },
   'golf-liv': { label: '⛳', emoji: '⛳', displayName: 'LIV Golf' },
   'hockey-nhl': { label: '🏒', emoji: '🏒', displayName: 'NHL' },
   'baseball-mlb': { label: '⚾', emoji: '⚾', displayName: 'MLB' },

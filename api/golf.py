@@ -72,7 +72,8 @@ async def golf_summary(request: Request, event_id: str):
 
 
 @router.get("/golf/pga/leaderboard/{event_id}")
-async def golf_leaderboard(event_id: str):
+@router.get("/golf/liv/leaderboard/{event_id}")
+async def golf_leaderboard(request: Request, event_id: str):
     """Top-30 golf leaderboard for a tournament.
 
     Returns formatted leaderboard with player positions, scores,
@@ -83,11 +84,13 @@ async def golf_leaderboard(event_id: str):
     """
     from services.golf_service import GolfService
 
-    cache_key = f"golf-leaderboard:golf-pga:{event_id}"
+    sport = request.url.path.split("/")[3]
+    tour = f"golf-{sport}"
+    cache_key = f"golf-leaderboard:{tour}:{event_id}"
 
     return await cached_json_response(
         cache=cache_45s,
         cache_key=cache_key,
-        fetch=lambda: GolfService.fetch_leaderboard(event_id=event_id),
+        fetch=lambda: GolfService.fetch_leaderboard(event_id=event_id, tour=tour),
         max_age=60,
     )

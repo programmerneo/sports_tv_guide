@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 LEADERBOARD_LIMIT = 30
 CORE_API_BASE = "https://sports.core.api.espn.com/v2/sports"
 
+
 class GolfService:
     """Service for golf-specific data formatting."""
 
@@ -34,16 +35,19 @@ class GolfService:
             return None
 
     @classmethod
-    async def fetch_schedule(cls, date: str | None = None) -> dict:
-        """Fetch PGA golf tournaments and format as schedule games.
+    async def fetch_schedule(
+        cls, date: str | None = None, tour: str = "golf-pga"
+    ) -> dict:
+        """Fetch golf tournaments and format as schedule games.
 
         Args:
             date: Year (YYYY) or date (YYYYMMDD) for filtering.
+            tour: Tour key (``golf-pga`` or ``golf-liv``).
 
         Returns:
             Dict with ``games`` list of tournament entries.
         """
-        url = SCOREBOARD_URLS["golf-pga"]
+        url = SCOREBOARD_URLS[tour]
         params: dict[str, str | int] = {"limit": 100}
         if date:
             params["dates"] = date
@@ -56,14 +60,14 @@ class GolfService:
         events = data.get("events", [])
         games = []
         for event in events:
-            game = cls._format_tournament_as_game(event)
+            game = cls._format_tournament_as_game(event, tour=tour)
             if game:
                 games.append(game)
 
         return {"games": games}
 
     @classmethod
-    async def fetch_leaderboard(cls, event_id: str) -> dict:
+    async def fetch_leaderboard(cls, event_id: str, tour: str = "golf-pga") -> dict:
         """Fetch golf tournament leaderboard (top 30).
 
         Tries the ESPN summary endpoint first. If it fails (ESPN
@@ -72,6 +76,7 @@ class GolfService:
 
         Args:
             event_id: ESPN event ID.
+            tour: Tour key (``golf-pga`` or ``golf-liv``).
 
         Returns:
             Dict with tournament info and ``leaderboard`` list.
@@ -80,10 +85,10 @@ class GolfService:
 
         # Fetch tournament details (course, purse, champion) in parallel
         # with the leaderboard data
-        details_task = cls._fetch_tournament_details(event_id)
+        details_task = cls._fetch_tournament_details(event_id, tour=tour)
 
         # Primary: summary endpoint
-        url = SUMMARY_URLS["golf-pga"]
+        url = SUMMARY_URLS[tour]
         resp = await client.get(url, params={"event": event_id})
 
         details = await details_task
@@ -99,21 +104,25 @@ class GolfService:
             event_id,
         )
 
-        result = await cls._fetch_leaderboard_from_core_api(event_id)
+        result = await cls._fetch_leaderboard_from_core_api(event_id, tour=tour)
         result.update(details)
         return result
 
     @classmethod
-    async def _fetch_tournament_details(cls, event_id: str) -> dict:
+    async def _fetch_tournament_details(
+        cls, event_id: str, tour: str = "golf-pga"
+    ) -> dict:
         """Fetch tournament metadata (course, purse, defending champion) from ESPN core API.
 
         Args:
             event_id: ESPN event ID.
+            tour: Tour key (``golf-pga`` or ``golf-liv``).
 
         Returns:
             Dict with course info, purse, and defending champion fields.
         """
-        url = f"{CORE_API_BASE}/golf/leagues/pga/events/{event_id}"
+        league = tour.split("-")[1]
+        url = f"{CORE_API_BASE}/golf/leagues/{league}/events/{event_id}"
         client = get_client()
         try:
             resp = await client.get(url)
@@ -155,7 +164,9 @@ class GolfService:
         return result
 
     @classmethod
-    async def _fetch_leaderboard_from_core_api(cls, event_id: str) -> dict:
+    async def _fetch_leaderboard_from_core_api(
+        cls, event_id: str, tour: str = "golf-pga"
+    ) -> dict:
         """Fallback: build leaderboard from ESPN's core competitors API.
 
         The core API returns ``$ref`` links per competitor that must be
@@ -164,13 +175,15 @@ class GolfService:
 
         Args:
             event_id: ESPN event ID.
+            tour: Tour key (``golf-pga`` or ``golf-liv``).
 
         Returns:
             Dict with tournament info and ``leaderboard`` list.
         """
+        league = tour.split("-")[1]
         base = "https://sports.core.api.espn.com/v2/sports"
         comp_url = (
-            f"{base}/golf/leagues/pga/events/{event_id}"
+            f"{base}/golf/leagues/{league}/events/{event_id}"
             f"/competitions/{event_id}/competitors"
         )
 
@@ -180,7 +193,7 @@ class GolfService:
         items = resp.json().get("items", [])
 
         # Fetch event name from the scoreboard
-        sb_url = f"{SCOREBOARD_URLS['golf-pga']}/{event_id}"
+        sb_url = f"{SCOREBOARD_URLS[tour]}/{event_id}"
         sb_resp = await client.get(sb_url)
         event_name = ""
         status_detail = ""
@@ -277,7 +290,9 @@ class GolfService:
         }
 
     @classmethod
-    def _format_tournament_as_game(cls, event: dict) -> dict | None:
+    def _format_tournament_as_game(
+        cls, event: dict, tour: str = "golf-pga"
+    ) -> dict | None:
         """Format an ESPN golf event into a Game-compatible dict.
 
         Golf tournaments don't have home/away teams, so we represent
@@ -327,7 +342,8 @@ class GolfService:
         courses = event.get("courses", [])
         course_name = courses[0].get("name", "") if courses else ""
 
-        event_name = event.get("name", "PGA Tournament")
+        tour_label = tour.split("-")[1].upper()
+        event_name = event.get("name", f"{tour_label} Tournament")
         short_name = event.get("shortName", event_name)
         event_logo = (
             (event.get("logos") or [{}])[0].get("href") if event.get("logos") else None
@@ -345,11 +361,11 @@ class GolfService:
         return {
             "id": event.get("id", ""),
             "eventId": event.get("id", ""),
-            "sport": "golf-pga",
+            "sport": tour,
             "homeTeam": {
                 "id": event.get("id", ""),
                 "name": event_name,
-                "abbreviation": short_name[:6] if short_name else "PGA",
+                "abbreviation": short_name[:6] if short_name else tour_label,
                 "logo": event_logo,
                 "record": None,
                 "conferenceRecord": None,

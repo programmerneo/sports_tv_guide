@@ -30,10 +30,15 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
   const hasScrolled = useRef(false);
 
   /**
+   * Normalize sport to its display column (e.g. golf-liv → golf-pga so both tours share one column)
+   */
+  const getColumnSport = (sport: string): string => (sport === 'golf-liv' ? 'golf-pga' : sport);
+
+  /**
    * Get unique sports from games
    */
   const sports = useMemo(() => {
-    const uniqueSports = new Set(games.map((g) => g.sport));
+    const uniqueSports = new Set(games.map((g) => getColumnSport(g.sport)));
     return Array.from(uniqueSports);
   }, [games]);
 
@@ -72,7 +77,7 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
    * Get games for a specific sport and time slot
    */
   const getGamesForSlot = (sport: string, timeSlot: string): Game[] => {
-    return games.filter((g) => g.sport === sport && getTimeSlot(g) === timeSlot);
+    return games.filter((g) => getColumnSport(g.sport) === sport && getTimeSlot(g) === timeSlot);
   };
 
   /**

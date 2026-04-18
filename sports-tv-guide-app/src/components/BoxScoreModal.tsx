@@ -104,7 +104,7 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
     setLoading(true);
     try {
       apiService.clearCacheByPattern(`golf-leaderboard:${game.eventId}`);
-      const leaderboard = await apiService.getGolfLeaderboard(game.eventId);
+      const leaderboard = await apiService.getGolfLeaderboard(game.eventId, game.sport);
       setGolfLeaderboard(leaderboard);
     } catch (error) {
       console.error('Failed to load golf leaderboard:', error);

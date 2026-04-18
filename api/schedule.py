@@ -45,7 +45,9 @@ async def schedule(
 
 
 @router.get("/schedule/golf-pga")
+@router.get("/schedule/golf-liv")
 async def golf_schedule(
+    request: Request,
     date: str | None = None,
 ):
     """Golf tournament schedule formatted as games.
@@ -61,12 +63,13 @@ async def golf_schedule(
 
     from services.golf_service import GolfService
 
+    sport = request.url.path.split("/")[3]
     season_dates = date or str(datetime.now(timezone.utc).year)
-    cache_key = f"schedule:golf-pga:{season_dates}"
+    cache_key = f"schedule:{sport}:{season_dates}"
 
     return await cached_json_response(
         cache=cache_45s,
         cache_key=cache_key,
-        fetch=lambda: GolfService.fetch_schedule(date=season_dates),
+        fetch=lambda: GolfService.fetch_schedule(date=season_dates, tour=sport),
         max_age=45,
     )

@@ -107,7 +107,20 @@ class ApiService {
       const response = await this.fetchWithTimeout(url);
       const data = await response.json();
 
-      const games: Game[] = data.games || [];
+      let games: Game[] = data.games || [];
+
+      // When fetching PGA, also pull LIV and merge into the same column
+      if (sport === 'golf-pga') {
+        try {
+          const livUrl = `${API_BASE_URL}/api/schedule/golf-liv?${params}`;
+          const livResponse = await this.fetchWithTimeout(livUrl);
+          const livData = await livResponse.json();
+          games = [...games, ...(livData.games || [])];
+        } catch (livError) {
+          console.warn('Failed to fetch LIV golf schedule:', livError);
+        }
+      }
+
       this.setCacheData(cacheKey, games);
       return games;
     } catch (error) {
@@ -140,14 +153,15 @@ class ApiService {
   /**
    * Fetch golf leaderboard
    */
-  async getGolfLeaderboard(eventId: string): Promise<GolfLeaderboard> {
+  async getGolfLeaderboard(eventId: string, sport: SportType = 'golf-pga'): Promise<GolfLeaderboard> {
     const cacheKey = `golf-leaderboard:${eventId}`;
 
     const cached = this.getCachedData<GolfLeaderboard>(cacheKey, CacheDuration.GAME_SUMMARY);
     if (cached) return cached;
 
     try {
-      const url = `${API_BASE_URL}/api/golf/pga/leaderboard/${eventId}`;
+      const tour = sport === 'golf-liv' ? 'liv' : 'pga';
+      const url = `${API_BASE_URL}/api/golf/${tour}/leaderboard/${eventId}`;
       const response = await this.fetchWithTimeout(url);
       const leaderboard: GolfLeaderboard = await response.json();
       this.setCacheData(cacheKey, leaderboard);
