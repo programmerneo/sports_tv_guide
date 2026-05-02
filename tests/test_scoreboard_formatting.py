@@ -185,3 +185,33 @@ def test_format_team_color_missing():
     }
     team = ScoreboardService._format_team(competitor)
     assert team["color"] is None
+
+
+def test_parse_network_skips_mlbtv():
+    """MLB.TV streaming entry should be skipped when a real network is available."""
+    broadcasts = [
+        {"names": ["MLB.TV"]},
+        {"names": ["Marquee Sports Net"]},
+        {"names": ["DBACKS.TV"]},
+    ]
+    assert ScoreboardService._parse_network(broadcasts) == "Marquee Sports Net"
+
+
+def test_parse_network_mlbtv_only():
+    """Falls back to MLB.TV when it's the only broadcast."""
+    assert ScoreboardService._parse_network([{"names": ["MLB.TV"]}]) == "MLB.TV"
+
+
+def test_parse_network_national_tv():
+    """National TV network (e.g. ESPN) should be returned as-is."""
+    assert ScoreboardService._parse_network([{"names": ["ESPN"]}]) == "ESPN"
+
+
+def test_parse_network_apple_tv():
+    """Apple TV+ national broadcast should not be filtered out."""
+    assert ScoreboardService._parse_network([{"names": ["Apple TV"]}]) == "Apple TV"
+
+
+def test_parse_network_empty():
+    """Empty broadcasts list should return TBD."""
+    assert ScoreboardService._parse_network([]) == "TBD"

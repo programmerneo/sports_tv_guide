@@ -78,11 +78,14 @@ class GameService:
         # Get event ID from header
         event_id = header.get("id", "")
 
-        # Broadcasts
+        # Broadcasts — ESPN lists the national MLB.TV streaming entry first for baseball
+        # games; skip it to surface the actual TV network (regional or national TV).
         broadcasts = competition.get("broadcasts", [])
         network = "TBD"
         if broadcasts:
-            names = broadcasts[0].get("names", [])
+            non_mlbtv = [b for b in broadcasts if "MLB.TV" not in b.get("names", [])]
+            best = non_mlbtv[0] if non_mlbtv else broadcasts[0]
+            names = best.get("names", [])
             network = names[0] if names else "TBD"
 
         # Venue

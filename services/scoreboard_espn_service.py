@@ -97,8 +97,7 @@ class ScoreboardService:
             "status": cls._parse_status(event.get("status")),
             "startTime": event.get("date", ""),
             "endTime": event.get("endDate"),
-            "network": (competition.get("broadcasts") or [{}])[0].get("names", [""])[0]
-            or "TBD",
+            "network": cls._parse_network(competition.get("broadcasts") or []),
             "homeScore": int(home["score"]) if home.get("score") else None,
             "awayScore": int(away["score"]) if away.get("score") else None,
             "venue": (competition.get("venue") or {}).get("fullName"),
@@ -136,6 +135,15 @@ class ScoreboardService:
             "conference": CONFERENCE_SHORT_NAMES.get(conf_id),
             "rank": rank if rank is not None and rank < 99 else None,
         }
+
+    @classmethod
+    def _parse_network(cls, broadcasts: list) -> str:
+        """Return the best broadcast network, skipping MLB.TV streaming entries."""
+        if not broadcasts:
+            return "TBD"
+        non_mlbtv = [b for b in broadcasts if "MLB.TV" not in b.get("names", [])]
+        best = non_mlbtv[0] if non_mlbtv else broadcasts[0]
+        return best.get("names", ["TBD"])[0] or "TBD"
 
     @classmethod
     def _parse_status(cls, status: dict | None) -> str:
