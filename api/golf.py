@@ -10,7 +10,7 @@ from fastapi import APIRouter, Request
 
 from services.game_espn_service import GameService
 from services.scoreboard_espn_service import ScoreboardService
-from utils.cache import cache_45s, cache_default, cached_json_response
+from utils.cache import cache_45s, cached_json_response
 
 router = APIRouter(tags=["golf"])
 
@@ -38,14 +38,14 @@ async def golf_scoreboard(
     cache_key = f"golf:{tour}:{season_dates}:{limit}"
 
     return await cached_json_response(
-        cache=cache_default,
+        cache=cache_45s,
         cache_key=cache_key,
         fetch=lambda: ScoreboardService.fetch_scoreboard(
             sport=tour,
             date=season_dates,
             limit=limit,
         ),
-        max_age=1800,
+        max_age=45,
     )
 
 
