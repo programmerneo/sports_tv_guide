@@ -1,47 +1,27 @@
 # 🚀 Sports TV Guide - Development Roadmap
 
-Track of what's complete, in progress, and what still needs work.
-
-## ✅ Phase 1: Core App Structure (COMPLETE)
-
-- ✅ Expo project setup with TypeScript
-- ✅ React Navigation (bottom tabs + stack)
-- ✅ Project folder structure
-- ✅ Configuration files (babel, eslint, prettier, tsconfig)
-- ✅ Zustand state management setup
-- ✅ API client with caching
-- ✅ Type definitions
-- ✅ Constants and theme colors
-
-**Status:** 🟢 Production-ready foundation
-
----
-
-## ✅ Phase 2: Core Components (COMPLETE)
-
-### Main Components
-- ✅ **HomeScreen** - TV Guide with games grid
-- ✅ **TVGuideGrid** - Time × sport layout
-- ✅ **UpcomingTodaySection** - Live games carousel
-- ✅ **SportTabs** - Multi-sport filtering
-- ✅ **GameCard** - Individual game display
-- ✅ **BoxScoreModal** - Game details/statistics
-- ✅ **EmptyState** - No games screen with tomorrow preview
-
-### Navigation Screens
-- ✅ **HomeScreen** - Functional TV guide
-- ⚠️ **FavoritesScreen** - UI placeholder (no functionality)
-- ⚠️ **SearchScreen** - UI placeholder (no functionality)
-- ⚠️ **NotificationsScreen** - UI placeholder (no functionality)
-- ⚠️ **ProfileScreen** - UI placeholder (no functionality)
-
-**Status:** 🟡 Core screens complete, tab screens need implementation
+Track of what's in progress and what still needs work.
 
 ---
 
 ## 🚧 Phase 3: Feature Implementation (IN PROGRESS / NEEDED)
 
 ### High Priority (Recommended First)
+
+#### Standings — College Sports
+- 📋 Add `basketball-college` standings to UI
+  - [ ] Add `basketball-college` to `STANDINGS_SPORTS` in `StandingsScreen.tsx`
+  - [ ] Add label/emoji to `SPORT_INFO`
+  - [ ] Add to `StandingsSportType` in `src/types/index.ts`
+- 📋 Add `football-college` standings (backend + UI)
+  - [ ] Add ESPN URL to `STANDINGS_URLS` in `constants/espn.py`
+  - [ ] Add route to `api/standings.py` (`_PATH_TO_SPORT`)
+  - [ ] Add `football-college` to `STANDINGS_SPORTS` in `StandingsScreen.tsx`
+  - [ ] Define column config in `COLUMNS` (W-L-T, PCT, PF, PA)
+  - [ ] Add label/emoji to `SPORT_INFO`
+  - [ ] Add to `StandingsSportType` in `src/types/index.ts`
+
+**Estimated:** 2-3 hours
 
 #### Favorites Functionality
 - 📋 Implement FavoritesScreen
@@ -140,7 +120,6 @@ Track of what's complete, in progress, and what still needs work.
 #### Accessibility (a11y)
 - 📋 Screen reader support
 - 📋 Keyboard navigation
-- ✅ Color contrast improvements (predictor bar: luminance check for dark team colors)
 - 📋 Alt text for all images
 
 **Estimated:** 2-3 hours
@@ -218,9 +197,9 @@ Track of what's complete, in progress, and what still needs work.
 ## 📊 Implementation Order (Recommended)
 
 **Week 1:**
-1. Implement Favorites functionality (High ROI)
-2. Add data persistence with AsyncStorage
-3. Set up basic testing
+1. College football standings
+2. Implement Favorites functionality (High ROI)
+3. Add data persistence with AsyncStorage
 
 **Week 2:**
 4. Implement Search
@@ -240,13 +219,6 @@ Track of what's complete, in progress, and what still needs work.
 ---
 
 ## 🎯 Milestones
-
-### MVP (Current)
-- ✅ Display sports games in TV guide grid
-- ✅ Filter by sport
-- ✅ View game details
-- ✅ Real-time score updates
-- ✅ Empty state with tomorrow's games
 
 ### V1.0 (Next)
 - [ ] Favorites functionality
@@ -301,14 +273,6 @@ Track of what's complete, in progress, and what still needs work.
 
 ## 📦 Dependencies to Consider
 
-### Already Included
-- ✅ expo
-- ✅ react-native
-- ✅ @react-navigation/native
-- ✅ zustand
-- ✅ typescript
-
-### For Future Features
 - 📦 `expo-notifications` - Local/push notifications
 - 📦 `@react-native-async-storage/async-storage` - Data persistence
 - 📦 `expo-linear-gradient` - Background gradients
@@ -320,23 +284,14 @@ Track of what's complete, in progress, and what still needs work.
 
 ## ✨ Quick Wins (Easy to Implement)
 
-These features are easy to add and would improve the app:
-
 1. **Pull-to-Refresh Animation** (30 min)
    - Add visual feedback when refreshing
 
-2. **Sport Emojis** (15 min)
-   - More consistent emoji usage
-
-3. **Better Empty State** (1 hour)
+2. **Better Empty State** (1 hour)
    - More helpful messaging
    - Suggest actions
 
-4. **Keyboard Shortcuts** (1 hour)
-   - Command palette for navigation
-   - Quick actions
-
-5. **Game Notifications** (2 hours)
+3. **Game Notifications** (2 hours)
    - Toast notifications for live updates
    - Sound effect option
 
@@ -370,22 +325,6 @@ Before implementing new features, consider:
 
 ---
 
-## 📈 Success Metrics
-
-How to know the app is production-ready:
-
-- ✅ MVP features working (TV guide, filtering, details)
-- ✅ All screens functional (Favorites, Search, Profile, Notifications)
-- ✅ Data persists across sessions
-- ✅ Test coverage > 80%
-- ✅ No console errors
-- ✅ Smooth 60 FPS performance
-- ✅ Accessible to screen readers
-- ✅ Works offline
-- ✅ App icons and splash screen
-
----
-
-**Last Updated:** March 10, 2026
-**Current Status:** MVP Complete, Feature Development Phase
-**Next Priority:** Favorites + Search + Notifications
+**Last Updated:** May 2, 2026
+**Current Status:** Feature Development Phase
+**Next Priority:** College Football Standings + Favorites + Search

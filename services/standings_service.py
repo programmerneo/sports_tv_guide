@@ -1,7 +1,7 @@
 """
 Fetch standings from ESPN's public API.
 
-Supports NFL, MLB, and NCAA college basketball.
+Supports NFL, MLB, NHL, and NCAA college basketball.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ class StandingsService:
         """Fetch current standings for a sport.
 
         Args:
-            sport: ``'nfl'``, ``'mlb'``, or ``'basketball-college'``.
+            sport: ``'nfl'``, ``'mlb'``, ``'nhl'``, or ``'basketball-college'``.
 
         Returns:
             Dictionary with league name and a list of conference/division groups.
@@ -42,19 +42,37 @@ class StandingsService:
         data = resp.json()
 
         groups: list[dict] = []
-        for group in data.get("children", []):
-            teams = []
-            standings = group.get("standings", {})
-            for entry in standings.get("entries", []):
-                teams.append(cls._format_team(entry, sport))
+        for child in data.get("children", []):
+            sub_children = child.get("children", [])
+            direct_entries = child.get("standings", {}).get("entries", [])
 
-            groups.append(
-                {
-                    "name": group.get("name", ""),
-                    "abbreviation": group.get("abbreviation", ""),
-                    "teams": teams,
-                }
-            )
+            if sub_children and not direct_entries:
+                # Nested: child is a league container (e.g., AL/NL in MLB)
+                league_name = child.get("name", "")
+                for group in sub_children:
+                    teams = [
+                        cls._format_team(entry, sport)
+                        for entry in group.get("standings", {}).get("entries", [])
+                    ]
+                    groups.append(
+                        {
+                            "name": group.get("name", ""),
+                            "abbreviation": group.get("abbreviation", ""),
+                            "league": league_name,
+                            "teams": teams,
+                        }
+                    )
+            else:
+                # Flat: child is a direct division group
+                teams = [cls._format_team(entry, sport) for entry in direct_entries]
+                groups.append(
+                    {
+                        "name": child.get("name", ""),
+                        "abbreviation": child.get("abbreviation", ""),
+                        "league": None,
+                        "teams": teams,
+                    }
+                )
 
         return {
             "sport": sport,

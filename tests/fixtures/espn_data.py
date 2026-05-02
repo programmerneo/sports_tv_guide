@@ -471,3 +471,173 @@ SAMPLE_ESPN_PREDICTOR = {
     "homeTeam": {"id": "150", "gameProjection": "76.4", "teamChanceLoss": "23.6"},
     "awayTeam": {"id": "153", "gameProjection": "23.6", "teamChanceLoss": "76.4"},
 }
+
+# ── Standings fixtures ────────────────────────────────────────────────────────
+
+
+def _make_team_entry(display_name, short_name, abbreviation, logo, stats):
+    """Build a minimal ESPN standings entry."""
+    return {
+        "team": {
+            "displayName": display_name,
+            "shortDisplayName": short_name,
+            "abbreviation": abbreviation,
+            "logos": [{"href": logo}],
+        },
+        "stats": [{"name": k, "displayValue": v} for k, v in stats.items()],
+    }
+
+
+# Flat structure (NHL/NFL style) — each child is a division with direct entries
+SAMPLE_ESPN_STANDINGS_FLAT = {
+    "name": "National Hockey League",
+    "seasons": [{"displayName": "2025-26"}],
+    "children": [
+        {
+            "name": "Atlantic Division",
+            "abbreviation": "ATL",
+            "standings": {
+                "entries": [
+                    _make_team_entry(
+                        "Boston Bruins",
+                        "Boston",
+                        "BOS",
+                        "https://example.com/bos.png",
+                        {
+                            "wins": "40",
+                            "losses": "20",
+                            "points": "93",
+                            "gamesPlayed": "62",
+                            "overtimeLosses": "2",
+                            "pointsFor": "210",
+                            "pointsAgainst": "175",
+                        },
+                    ),
+                ]
+            },
+        },
+        {
+            "name": "Metropolitan Division",
+            "abbreviation": "MET",
+            "standings": {
+                "entries": [
+                    _make_team_entry(
+                        "New York Rangers",
+                        "NY Rangers",
+                        "NYR",
+                        "https://example.com/nyr.png",
+                        {
+                            "wins": "38",
+                            "losses": "22",
+                            "points": "88",
+                            "gamesPlayed": "62",
+                            "overtimeLosses": "2",
+                            "pointsFor": "198",
+                            "pointsAgainst": "180",
+                        },
+                    ),
+                ]
+            },
+        },
+    ],
+}
+
+# Nested structure (MLB style) — children are league containers with sub-children
+SAMPLE_ESPN_STANDINGS_NESTED = {
+    "name": "MLB",
+    "seasons": [{"displayName": "2025"}],
+    "children": [
+        {
+            "name": "American League",
+            "children": [
+                {
+                    "name": "American League East",
+                    "abbreviation": "ALE",
+                    "standings": {
+                        "entries": [
+                            _make_team_entry(
+                                "New York Yankees",
+                                "NY Yankees",
+                                "NYY",
+                                "https://example.com/nyy.png",
+                                {
+                                    "wins": "55",
+                                    "losses": "30",
+                                    "winPercent": ".647",
+                                    "gamesBehind": "0",
+                                    "gamesPlayed": "85",
+                                    "homeWins": "28",
+                                    "homeLosses": "14",
+                                    "roadWins": "27",
+                                    "roadLosses": "16",
+                                },
+                            ),
+                        ]
+                    },
+                },
+            ],
+        },
+        {
+            "name": "National League",
+            "children": [
+                {
+                    "name": "National League East",
+                    "abbreviation": "NLE",
+                    "standings": {
+                        "entries": [
+                            _make_team_entry(
+                                "Atlanta Braves",
+                                "Atlanta",
+                                "ATL",
+                                "https://example.com/atl.png",
+                                {
+                                    "wins": "50",
+                                    "losses": "35",
+                                    "winPercent": ".588",
+                                    "gamesBehind": "0",
+                                    "gamesPlayed": "85",
+                                    "homeWins": "25",
+                                    "homeLosses": "17",
+                                    "roadWins": "25",
+                                    "roadLosses": "18",
+                                },
+                            ),
+                        ]
+                    },
+                },
+            ],
+        },
+    ],
+}
+
+# NFL entry with ties (used to test the W-L-T record string)
+SAMPLE_NFL_ENTRY_WITH_TIES = _make_team_entry(
+    "Philadelphia Eagles",
+    "Philadelphia",
+    "PHI",
+    "https://example.com/phi.png",
+    {
+        "wins": "14",
+        "losses": "3",
+        "ties": "1",
+        "winPercent": ".806",
+        "pointsFor": "477",
+        "pointsAgainst": "344",
+    },
+)
+
+# NFL entry without ties
+SAMPLE_NFL_ENTRY_NO_TIES = _make_team_entry(
+    "Kansas City Chiefs",
+    "Kansas City",
+    "KC",
+    "https://example.com/kc.png",
+    {
+        "wins": "15",
+        "losses": "2",
+        "ties": "0",
+        "winPercent": ".882",
+        "pointsFor": "496",
+        "pointsAgainst": "275",
+    },
+)

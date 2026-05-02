@@ -11,7 +11,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import HomeScreen from '@screens/HomeScreen';
 import BracketScreen from '@screens/BracketScreen';
-import FavoritesScreen from '@screens/FavoritesScreen';
+import StandingsScreen from '@screens/StandingsScreen';
 import SearchScreen from '@screens/SearchScreen';
 import NotificationsScreen from '@screens/NotificationsScreen';
 import ProfileScreen from '@screens/ProfileScreen';
@@ -72,12 +72,12 @@ function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name="Favorites"
-        component={FavoritesScreen}
+        name="Standings"
+        component={StandingsScreen}
         options={{
-          title: 'Favorites',
-          tabBarLabel: 'Favorites',
-          tabBarIcon: ({ color, size }) => <Text style={{ fontSize: size, color }}>⭐</Text>,
+          title: 'Standings',
+          tabBarLabel: 'Standings',
+          tabBarIcon: ({ color, size }) => <Text style={{ fontSize: size, color }}>🏆</Text>,
         }}
       />
       <Tab.Screen

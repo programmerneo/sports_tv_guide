@@ -1,7 +1,7 @@
 """
 Standings via ESPN's public API (no scraping).
 
-Supports NFL, MLB, and NCAA college basketball.
+Supports NFL, MLB, NHL, and NCAA college basketball.
 """
 
 from __future__ import annotations
@@ -17,12 +17,14 @@ router = APIRouter(tags=["standings"])
 _PATH_TO_SPORT: dict[str, str] = {
     "nfl": "nfl",
     "mlb": "mlb",
+    "nhl": "nhl",
     "basketball-college": "basketball-college",
 }
 
 
 @router.get("/standings/nfl")
 @router.get("/standings/mlb")
+@router.get("/standings/nhl")
 @router.get("/standings/basketball-college")
 async def standings(request: Request, conference: str | None = None):
     """Standings for a given sport.

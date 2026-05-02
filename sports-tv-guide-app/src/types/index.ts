@@ -236,3 +236,30 @@ export interface BracketResponse {
   defaultTabSectionId: number | null;
   tabs: BracketTab[];
 }
+
+// --- Standings Types ---
+
+export type StandingsSportType = 'nfl' | 'mlb' | 'nhl' | 'basketball-college';
+
+export interface StandingsTeam {
+  team: string;
+  shortName: string;
+  abbreviation: string;
+  logo: string;
+  record: string;
+  [key: string]: string;
+}
+
+export interface StandingsGroup {
+  name: string;
+  abbreviation: string;
+  league?: string | null;
+  teams: StandingsTeam[];
+}
+
+export interface StandingsResponse {
+  sport: string;
+  league: string;
+  season: string;
+  groups: StandingsGroup[];
+}

@@ -95,6 +95,7 @@ AP Top 25 rankings fetched from ESPN's public API. Returns rank, previous rank, 
 ```
 GET /api/standings/nfl
 GET /api/standings/mlb
+GET /api/standings/nhl
 GET /api/standings/basketball-college
 ```
 
@@ -154,6 +155,7 @@ Query params (scoreboard): `?dates=YYYY` for full season or `?dates=YYYYMMDD` fo
     ├── test_schemas.py       # Pydantic schema serialization tests
     ├── test_scoreboard_formatting.py  # ScoreboardService formatting tests
     ├── test_game_formatting.py        # GameService formatting tests
+    ├── test_standings_formatting.py   # StandingsService formatting tests
     └── test_api_contract.py  # API contract validation tests
 ```
 

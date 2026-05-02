@@ -3,7 +3,7 @@
  */
 
 import { API_BASE_URL, API_TIMEOUT, CACHE_DURATION as CacheDuration } from '@constants/index';
-import { BracketResponse, Game, GameSummary, GolfLeaderboard, SportType } from '@types/index';
+import { BracketResponse, Game, GameSummary, GolfLeaderboard, SportType, StandingsResponse, StandingsSportType } from '@types/index';
 
 interface CacheEntry<T> {
   data: T;
@@ -190,6 +190,27 @@ class ApiService {
       return data;
     } catch (error) {
       console.error('Failed to fetch brackets:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch standings for a sport
+   */
+  async getStandings(sport: StandingsSportType): Promise<StandingsResponse> {
+    const cacheKey = `standings:${sport}`;
+
+    const cached = this.getCachedData<StandingsResponse>(cacheKey, CacheDuration.STANDINGS);
+    if (cached) return cached;
+
+    try {
+      const url = `${API_BASE_URL}/api/standings/${sport}`;
+      const response = await this.fetchWithTimeout(url);
+      const data: StandingsResponse = await response.json();
+      this.setCacheData(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch ${sport} standings:`, error);
       throw error;
     }
   }

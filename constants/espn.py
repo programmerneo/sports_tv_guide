@@ -19,8 +19,9 @@ RANKINGS_URLS: dict[str, str] = {
 
 # ── Standings endpoints ───────────────────────────────────────────────────────
 STANDINGS_URLS: dict[str, str] = {
-    "nfl": f"{ESPN_API}/football/nfl/standings",
-    "mlb": f"{ESPN_API}/baseball/mlb/standings",
+    "nfl": f"{ESPN_API}/football/nfl/standings?level=3",
+    "mlb": f"{ESPN_API}/baseball/mlb/standings?level=3",
+    "nhl": f"{ESPN_API}/hockey/nhl/standings?level=3",
     "basketball-college": f"{ESPN_API}/basketball/mens-college-basketball/standings",
 }
 
@@ -46,6 +47,15 @@ STANDINGS_EXTRA_STATS: dict[str, list[str]] = {
         "homeLosses",
         "roadWins",
         "roadLosses",
+    ],
+    "nhl": [
+        "points",
+        "gamesPlayed",
+        "overtimeLosses",
+        "gamesBehind",
+        "playoffSeed",
+        "clincher",
+        "regulationWins",
     ],
     "basketball-college": [
         "leagueWinPercent",
