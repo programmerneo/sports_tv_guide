@@ -15,19 +15,19 @@ Built with **FastAPI**, this application fetches data from ESPN's public API (sc
 uv sync
 
 # Run in development mode (hot reload)
-uv run fastapi dev main.py
+uv run fastapi dev main.py --port 3001
 
 # Run in production mode
-uv run fastapi run main.py
+uv run fastapi run main.py --port 3001
 ```
 
-The server starts on `http://localhost:3000` by default. Visit `http://localhost:3000/docs` for interactive Swagger UI documentation.
+The server starts on `http://localhost:3001` by default. Visit `http://localhost:3001/docs` for interactive Swagger UI documentation.
 
 ### Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `PORT` | `3000` | Server port |
+| `PORT` | `3001` | Server port |
 
 ## API Endpoints
 

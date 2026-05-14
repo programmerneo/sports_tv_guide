@@ -11,7 +11,7 @@ All code must follow `.claude/rules/code-style.md`. Read it before writing code.
 ## Quick Reference
 
 ```bash
-uv run fastapi dev main.py       # Run app
+uv run fastapi dev main.py --port 3001  # Run app
 uv run pytest                    # Run tests
 uv run ruff check . && uv run ruff format .  # Lint + format
 ```

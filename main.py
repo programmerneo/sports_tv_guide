@@ -4,7 +4,6 @@ NCAA API — FastAPI application entry point.
 
 from __future__ import annotations
 
-import os
 import sys
 from contextlib import asynccontextmanager
 
@@ -13,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
 from api import discover_routers
+from config import settings
 from utils.client import close_client
 
 
@@ -34,10 +34,11 @@ app = FastAPI(
 # This covers Localhost (Web), 10.0.2.2 (Android Emulator), and common Expo ports.
 origins = [
     "http://localhost:3000",
-    "http://localhost:8081",  # Default Expo Metro port
+    "http://localhost:3001",
+    "http://localhost:8081",
     "http://127.0.0.1:8081",
-    "http://localhost:19006",  # Common Expo Web port
-    "http://10.0.2.2:3000",  # Android Emulator access
+    "http://localhost:19006",
+    "http://10.0.2.2:3001",
 ]
 
 app.add_middleware(
@@ -65,8 +66,8 @@ def cli() -> None:
 
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=int(os.environ.get("PORT", 3000)),
+        host=settings.host,
+        port=settings.port,
         reload="--reload" in sys.argv,
     )
 

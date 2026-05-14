@@ -8,9 +8,7 @@ import { SportType } from '@types/index';
 const getApiBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
 
-  // FastAPI dev mode defaults to 8000.
-  // Change this to '3000' only if you are running 'uv run ncaa-api' or 'python main.py'
-  const port = '8000';
+  const port = '3001';
 
   if (Platform.OS === 'android') {
     return `http://10.0.2.2:${port}`;
