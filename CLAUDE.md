@@ -11,10 +11,13 @@ All code must follow `.claude/rules/code-style.md`. Read it before writing code.
 ## Quick Reference
 
 ```bash
-uv run fastapi dev main.py --port 3001  # Run app
+uv run python main.py            # Run app (uses settings.port = 3001 from config.py)
+uv run python main.py --reload   # Run with hot reload
 uv run pytest                    # Run tests
 uv run ruff check . && uv run ruff format .  # Lint + format
 ```
+
+Do not launch with `fastapi dev main.py` — without `--port 3001` it silently defaults to 8000, and the frontend (which expects 3001) will render "no games today" instead of a clear error.
 
 ## ESPN API Gotchas
 

@@ -223,16 +223,27 @@ class ApiService {
     const results = await Promise.allSettled(promises);
 
     const sportSchedules = new Map<SportType, Game[]>();
+    let failures = 0;
 
     results.forEach((result, index) => {
       const sport = sports[index];
       if (result.status === 'fulfilled') {
         sportSchedules.set(sport, result.value);
       } else {
+        failures += 1;
         console.warn(`Failed to fetch ${sport} schedule:`, result.reason);
         sportSchedules.set(sport, []);
       }
     });
+
+    // If every requested sport failed, the backend is unreachable (or every
+    // endpoint is broken). Surface that instead of pretending there are no games.
+    if (sports.length > 0 && failures === sports.length) {
+      const port = new URL(API_BASE_URL).port || '(default)';
+      throw new Error(
+        `Cannot reach API at ${API_BASE_URL} — is the backend running on port ${port}?`
+      );
+    }
 
     return sportSchedules;
   }

@@ -14,12 +14,17 @@ Built with **FastAPI**, this application fetches data from ESPN's public API (sc
 # Install dependencies
 uv sync
 
-# Run in development mode (hot reload)
-uv run fastapi dev main.py --port 3001
+# Run in development mode
+uv run python main.py
 
-# Run in production mode
+# Run with hot reload
+uv run python main.py --reload
+
+# Run in production mode (no reload, multiple workers possible)
 uv run fastapi run main.py --port 3001
 ```
+
+`python main.py` reads its port from `config.py` (`settings.port`, default `3001`), so the server always lands on the same port regardless of who launches it. Override via the `PORT` env var or a `.env` file. Avoid `fastapi dev main.py` without `--port 3001` — it silently defaults to 8000 and the frontend won't find the backend.
 
 The server starts on `http://localhost:3001` by default. Visit `http://localhost:3001/docs` for interactive Swagger UI documentation.
 

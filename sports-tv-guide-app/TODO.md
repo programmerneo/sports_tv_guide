@@ -9,10 +9,7 @@ Track of what's in progress and what still needs work.
 ### High Priority (Recommended First)
 
 #### Standings — College Sports
-- 📋 Add `basketball-college` standings to UI
-  - [ ] Add `basketball-college` to `STANDINGS_SPORTS` in `StandingsScreen.tsx`
-  - [ ] Add label/emoji to `SPORT_INFO`
-  - [ ] Add to `StandingsSportType` in `src/types/index.ts`
+- ✅ Add `basketball-college` standings to UI (shipped in commit `03e76da`)
 - 📋 Add `football-college` standings (backend + UI)
   - [ ] Add ESPN URL to `STANDINGS_URLS` in `constants/espn.py`
   - [ ] Add route to `api/standings.py` (`_PATH_TO_SPORT`)
@@ -21,7 +18,7 @@ Track of what's in progress and what still needs work.
   - [ ] Add label/emoji to `SPORT_INFO`
   - [ ] Add to `StandingsSportType` in `src/types/index.ts`
 
-**Estimated:** 2-3 hours
+**Estimated:** 1-2 hours
 
 #### Favorites Functionality
 - 📋 Implement FavoritesScreen
@@ -273,12 +270,12 @@ Track of what's in progress and what still needs work.
 
 ## 📦 Dependencies to Consider
 
+Already installed (see `package.json`): `@react-native-async-storage/async-storage`, `react-native-reanimated`, `react-native-gesture-handler`, `expo-local-authentication`, `expo-secure-store`.
+
+Still to add when their feature lands:
 - 📦 `expo-notifications` - Local/push notifications
-- 📦 `@react-native-async-storage/async-storage` - Data persistence
 - 📦 `expo-linear-gradient` - Background gradients
 - 📦 `lottie-react-native` - Animations
-- 📦 `react-native-reanimated` - Advanced animations
-- 📦 `react-native-gesture-handler` - Gesture support
 
 ---
 
@@ -325,6 +322,6 @@ Before implementing new features, consider:
 
 ---
 
-**Last Updated:** May 2, 2026
+**Last Updated:** May 16, 2026
 **Current Status:** Feature Development Phase
 **Next Priority:** College Football Standings + Favorites + Search

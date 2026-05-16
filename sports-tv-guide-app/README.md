@@ -32,15 +32,17 @@ npm install
 ```
 
 ### Step 2: Configure API (30 seconds)
-Edit `app.json` and set your backend URL:
-```json
-{
-  "extra": {
-    "apiUrl": "http://localhost:8000",
-    "apiTimeout": 10000
-  }
-}
+The app defaults to `http://localhost:3001` (the backend's documented port — see the root README). To point at a different host, set `EXPO_PUBLIC_API_URL` before starting Expo:
+
+```bash
+# macOS / Linux
+EXPO_PUBLIC_API_URL=http://localhost:3001 npx expo start
+
+# Windows PowerShell
+$env:EXPO_PUBLIC_API_URL = "http://localhost:3001"; npx expo start
 ```
+
+Android emulator users: the app auto-rewrites `localhost` to `10.0.2.2`, so no override is needed.
 
 ### Step 3: Start Development Server (30 seconds)
 ```bash
@@ -102,30 +104,19 @@ Wait for installation to complete. This may take 2-5 minutes.
 
 ### Backend Configuration
 
-Before running the app, update the API endpoint to match your backend:
+The API base URL is resolved at startup by [`src/constants/index.ts`](src/constants/index.ts):
+
+1. If `EXPO_PUBLIC_API_URL` is set, that value is used.
+2. Otherwise, the app defaults to `http://localhost:3001` (Android emulators use `http://10.0.2.2:3001`).
 
 **Option A: Local Development**
-If your backend is running locally on port 8000:
+No config needed — start your backend on port 3001 (see the root [README](../README.md)) and run `npx expo start`.
 
-```json
-{
-  "extra": {
-    "apiUrl": "http://localhost:8000",
-    "apiTimeout": 10000
-  }
-}
-```
+**Option B: Remote Backend or Custom Port**
+Export `EXPO_PUBLIC_API_URL` before starting Expo:
 
-**Option B: Remote Backend**
-If you have a deployed backend, update `app.json`:
-
-```json
-{
-  "extra": {
-    "apiUrl": "https://your-api-domain.com",
-    "apiTimeout": 10000
-  }
-}
+```bash
+EXPO_PUBLIC_API_URL=https://your-api-domain.com npx expo start
 ```
 
 ### Run the App
@@ -203,21 +194,18 @@ Your backend should be running to provide sports data.
 #### Ensure Your FastAPI Backend is Running
 
 ```bash
-# From your backend directory
-cd /path/to/backend
-python main.py
-# or
-fastapi dev main.py
+# From the repo root
+uv run python main.py
 ```
 
-The backend should be running on `http://localhost:8000`
+The backend reads its port from `config.py` (`settings.port`, default `3001`) and listens on `http://localhost:3001`.
 
 #### Test Backend Connection
 
 Once both are running, check if the API is accessible:
 
 ```bash
-curl http://localhost:8000/api/schedule/football-nfl?date=20260310&seasontype=2
+curl "http://localhost:3001/api/schedule/football-nfl?date=20260310&seasontype=2"
 ```
 
 You should get a JSON response with game data.
@@ -258,31 +246,33 @@ You should get a JSON response with game data.
 
 ```
 sports-tv-guide-app/
+├── index.tsx             # Expo entry point
 ├── src/
+│   ├── App.tsx           # Root component with navigation
 │   ├── components/       # Reusable React Native components
+│   │   ├── BoxScoreModal.tsx
+│   │   ├── BracketView.tsx
+│   │   ├── EmptyState.tsx
+│   │   ├── GameCard.tsx
 │   │   ├── InProgressTodaySection.tsx
 │   │   ├── SportTabs.tsx
-│   │   ├── TVGuideGrid.tsx
-│   │   ├── GameCard.tsx
-│   │   ├── BoxScoreModal.tsx
-│   │   └── EmptyState.tsx
+│   │   └── TVGuideGrid.tsx
 │   ├── screens/          # Screen components (full-screen views)
 │   │   ├── HomeScreen.tsx
+│   │   ├── BracketScreen.tsx
+│   │   ├── StandingsScreen.tsx
 │   │   ├── FavoritesScreen.tsx
 │   │   ├── SearchScreen.tsx
 │   │   ├── NotificationsScreen.tsx
 │   │   └── ProfileScreen.tsx
 │   ├── services/         # API and external service clients
-│   │   └── api.ts        # ESPN API client
+│   │   └── api.ts        # FastAPI backend client
 │   ├── store/            # State management (Zustand)
 │   │   └── gameStore.ts  # Game state and selectors
-│   ├── types/            # TypeScript type definitions
-│   │   └── index.ts
-│   ├── constants/        # App constants and configuration
-│   │   └── index.ts
-│   ├── hooks/            # Custom React hooks (future)
-│   ├── utils/            # Utility functions (future)
-│   └── App.tsx           # Main app component with navigation
+│   ├── constants/
+│   │   └── index.ts      # API URL, sports, colors, cache TTLs
+│   └── types/
+│       └── index.ts
 ├── app.json              # Expo configuration
 ├── package.json          # Dependencies and scripts
 ├── tsconfig.json         # TypeScript configuration
@@ -348,6 +338,8 @@ GET  /api/game/{sport}/{eventId}
 - `basketball-college` - NCAA Basketball
 - `football-college` - NCAA Football
 - `football-nfl` - NFL Football
+- `baseball-mlb` - MLB Baseball
+- `hockey-nhl` - NHL Hockey
 - `golf-pga` - PGA Golf
 - `golf-liv` - LIV Golf
 
@@ -375,9 +367,12 @@ useGameStore((state) => state.toggleFavoriteGame(gameId));
 
 ### Caching Strategy
 
-- **Schedule Data**: 45 seconds cache
-- **Game Summary**: 60 seconds cache
-- **Preferences**: 24 hours cache
+Defined in [`src/constants/index.ts`](src/constants/index.ts) (`CACHE_DURATION`):
+
+- **Schedule Data**: 30 seconds
+- **Game Summary**: 60 seconds
+- **Standings / Brackets**: 5 minutes
+- **Preferences**: 24 hours
 - **Manual Refresh**: Clears all caches
 
 ---
@@ -394,12 +389,11 @@ LIVE_RED: '#ff4444',    // Or this
 ```
 
 ### Change API URL
-File: `app.json`
-```json
-"extra": {
-  "apiUrl": "https://your-api.com"
-}
+Set the `EXPO_PUBLIC_API_URL` environment variable before starting Expo:
+```bash
+EXPO_PUBLIC_API_URL=https://your-api.com npx expo start
 ```
+The default (when unset) is defined in [`src/constants/index.ts`](src/constants/index.ts).
 
 ### Add Sport
 File: `src/constants/index.ts`
@@ -462,11 +456,13 @@ npx expo start --clear
 
 ### Issue: API connection errors
 
+If you see the banner **"Cannot reach API at http://localhost:3001 — is the backend running on port 3001?"**, the frontend can't talk to the backend.
+
 **Solutions:**
-1. Verify backend is running: `curl http://localhost:8000/api/health`
-2. Check API URL in `app.json` is correct
-3. Verify backend port matches `app.json` configuration
-4. Check firewall settings allow connection
+1. Verify backend is running: `curl http://localhost:3001/docs` should return HTML.
+2. Confirm the backend started on the expected port. `uv run python main.py` honors `settings.port` (default 3001); `fastapi dev main.py` without `--port 3001` will silently use 8000.
+3. If you've overridden `EXPO_PUBLIC_API_URL`, double-check it matches the backend's host and port.
+4. Check firewall settings allow connection.
 
 ### Issue: TypeScript errors
 

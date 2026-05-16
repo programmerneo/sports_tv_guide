@@ -91,7 +91,7 @@ function getGamesBySport(sport: string) {}
 
 // Constants: UPPER_SNAKE_CASE
 const API_TIMEOUT = 10000;
-const CACHE_DURATION = 45000;
+const REFRESH_INTERVAL_MS = 30000;
 
 // Interfaces/Types: PascalCase
 interface Game {}
@@ -418,26 +418,28 @@ git push origin feat/feature-name
 
 ## File Organization
 
+Components are flat files (`ComponentName.tsx`), not directories. Co-located tests go under a sibling `__tests__/` folder.
+
 ```
 src/
+├── App.tsx
 ├── components/
-│   ├── GameCard/
-│   │   ├── GameCard.tsx
-│   │   └── GameCard.styles.ts (optional)
-│   └── ...
+│   ├── GameCard.tsx
+│   ├── ...
+│   └── __tests__/
 ├── screens/
 │   ├── HomeScreen.tsx
 │   └── ...
 ├── services/
 │   ├── api.ts
-│   └── ...
+│   └── __tests__/
 ├── store/
-│   └── gameStore.ts
-├── types/
-│   └── index.ts
+│   ├── gameStore.ts
+│   └── __tests__/
 ├── constants/
 │   └── index.ts
-└── App.tsx
+└── types/
+    └── index.ts
 ```
 
 ## Hot Tips
@@ -453,24 +455,22 @@ src/
 
 ## Useful Commands
 
+Defined in `package.json`:
+
 ```bash
-# Format code
-npm run prettier
+npm start              # Start the Expo dev server
+npm run android        # Start with Android emulator
+npm run ios            # Start with iOS simulator
+npm run web            # Start in a browser
+npm run lint           # ESLint
+npm test               # Jest
+```
 
-# Lint
-npm run lint
+Ad-hoc:
 
-# Type check
-npm run type-check
-
-# Test
-npm test
-
-# Clean build
-npm start --clear
-
-# View project info
-expo publish:history
+```bash
+npx prettier --write .     # Format
+npx expo start --clear     # Clear Metro cache and restart
 ```
 
 ## Resources
