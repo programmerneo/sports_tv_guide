@@ -22,7 +22,9 @@ def test_all_discovered_are_api_routers():
 
 def test_expected_routes_present(client):
     """The app should have routes for each auto-discovered module."""
-    routes = [r.path for r in client.app.routes]
+    # Use the OpenAPI schema rather than walking app.routes: Starlette 1.x
+    # wraps included routers in _IncludedRouter objects without a flat `.path`.
+    routes = client.app.openapi()["paths"].keys()
     # Spot-check a few key paths.
     assert "/api/march-madness/brackets" in routes
     assert "/api/game/basketball-college/{event_id}" in routes
