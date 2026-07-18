@@ -2,7 +2,7 @@
  * Empty State - Shows when there are no games
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 
 import { Game } from '@types/index';
-import { COLORS, SPORTS } from '@constants/index';
+import { SPORTS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { apiService } from '@services/api';
 import { useGameStore } from '@store/gameStore';
 
@@ -32,6 +34,8 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   showTomorrowsGames = false,
   onRetry,
 }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [tomorrowsGames, setTomorrowsGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(false);
   const preferences = useGameStore((state) => state.preferences);
@@ -89,7 +93,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={COLORS.PRIMARY} />
+              <ActivityIndicator size="small" color={theme.primary} />
               <Text style={styles.loadingText}>Loading tomorrow's games...</Text>
             </View>
           ) : tomorrowsGames.length > 0 ? (
@@ -153,152 +157,153 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.LIGHT_BG,
-  },
-  content: {
-    paddingHorizontal: 16,
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  messageContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 14,
-    color: COLORS.LIGHT_TEXT,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  retryButton: {
-    backgroundColor: COLORS.PRIMARY,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 32,
-  },
-  retryButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  tomorrowSection: {
-    width: '100%',
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-  },
-  tomorrowTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    marginBottom: 12,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  loadingText: {
-    fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
-    marginTop: 8,
-  },
-  tomorrowScroll: {
-    marginHorizontal: -16,
-    paddingHorizontal: 16,
-  },
-  tomorrowContent: {
-    paddingRight: 8,
-  },
-  tomorrowGame: {
-    backgroundColor: COLORS.LIGHT_BG,
-    borderRadius: 8,
-    padding: 12,
-    marginRight: 8,
-    width: 120,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  tomorrowGameHeader: {
-    marginBottom: 8,
-  },
-  tomorrowSport: {
-    fontSize: 24,
-  },
-  tomorrowMatchup: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  tomorrowTeam: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-  },
-  tomorrowVs: {
-    fontSize: 9,
-    color: COLORS.LIGHT_TEXT,
-    marginVertical: 2,
-  },
-  tomorrowTime: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: COLORS.PRIMARY,
-    marginBottom: 4,
-  },
-  tomorrowNetwork: {
-    fontSize: 9,
-    color: COLORS.LIGHT_TEXT,
-  },
-  noTomorrowText: {
-    fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
-    textAlign: 'center',
-    paddingVertical: 12,
-  },
-  tipsSection: {
-    width: '100%',
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    padding: 16,
-  },
-  tipsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    marginBottom: 12,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  tipDot: {
-    fontSize: 12,
-    color: COLORS.PRIMARY,
-    marginRight: 8,
-    fontWeight: 'bold',
-  },
-  tipText: {
-    flex: 1,
-    fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
-    lineHeight: 18,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.background,
+    },
+    content: {
+      paddingHorizontal: 16,
+      paddingVertical: 40,
+      alignItems: 'center',
+    },
+    messageContainer: {
+      alignItems: 'center',
+      marginBottom: 24,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginBottom: 12,
+    },
+    description: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    retryButton: {
+      backgroundColor: theme.primary,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      borderRadius: 8,
+      marginBottom: 32,
+    },
+    retryButtonText: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    tomorrowSection: {
+      width: '100%',
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 24,
+    },
+    tomorrowTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 12,
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      paddingVertical: 16,
+    },
+    loadingText: {
+      fontSize: 12,
+      color: theme.textSecondary,
+      marginTop: 8,
+    },
+    tomorrowScroll: {
+      marginHorizontal: -16,
+      paddingHorizontal: 16,
+    },
+    tomorrowContent: {
+      paddingRight: 8,
+    },
+    tomorrowGame: {
+      backgroundColor: theme.background,
+      borderRadius: 8,
+      padding: 12,
+      marginRight: 8,
+      width: 120,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    tomorrowGameHeader: {
+      marginBottom: 8,
+    },
+    tomorrowSport: {
+      fontSize: 24,
+    },
+    tomorrowMatchup: {
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    tomorrowTeam: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    tomorrowVs: {
+      fontSize: 9,
+      color: theme.textSecondary,
+      marginVertical: 2,
+    },
+    tomorrowTime: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.primary,
+      marginBottom: 4,
+    },
+    tomorrowNetwork: {
+      fontSize: 9,
+      color: theme.textSecondary,
+    },
+    noTomorrowText: {
+      fontSize: 12,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      paddingVertical: 12,
+    },
+    tipsSection: {
+      width: '100%',
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 16,
+    },
+    tipsTitle: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 12,
+    },
+    tipItem: {
+      flexDirection: 'row',
+      marginBottom: 12,
+    },
+    tipDot: {
+      fontSize: 12,
+      color: theme.primary,
+      marginRight: 8,
+      fontWeight: 'bold',
+    },
+    tipText: {
+      flex: 1,
+      fontSize: 12,
+      color: theme.textSecondary,
+      lineHeight: 18,
+    },
+  });
 
 export default EmptyState;

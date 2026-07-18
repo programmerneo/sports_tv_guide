@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
-import { COLORS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { apiService } from '@services/api';
 import { StandingsGroup, StandingsResponse, StandingsSportType } from '@types/index';
 
@@ -141,6 +142,8 @@ function isCurrentSeason(season: string): boolean {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function StandingsScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation = useNavigation();
   const [allStandings, setAllStandings] = useState<Partial<Record<StandingsSportType, StandingsResponse>>>({});
   const [activeSports, setActiveSports] = useState<StandingsSportType[]>([]);
@@ -212,7 +215,7 @@ export default function StandingsScreen() {
       <SafeAreaView style={styles.container}>
         <Header />
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
       </SafeAreaView>
     );
@@ -392,6 +395,8 @@ function filterGroups(
 // ── Header subcomponent ───────────────────────────────────────────────────────
 
 function Header() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation = useNavigation();
   return (
     <View style={styles.header}>
@@ -405,201 +410,202 @@ function Header() {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.LIGHT_BG,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    centered: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
 
-  // Header
-  header: {
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-  },
-  backButton: {
-    marginBottom: 12,
-  },
-  backButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.PRIMARY,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: COLORS.DARK_TEXT,
-  },
-  headerSeason: {
-    fontSize: 16,
-    color: COLORS.LIGHT_TEXT,
-    marginTop: 4,
-  },
+    // Header
+    header: {
+      backgroundColor: theme.surface,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    backButton: {
+      marginBottom: 12,
+    },
+    backButtonText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.primary,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: '700',
+      color: theme.text,
+    },
+    headerSeason: {
+      fontSize: 16,
+      color: theme.textSecondary,
+      marginTop: 4,
+    },
 
-  // Sport tabs
-  tabsRow: {
-    backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-    maxHeight: 52,
-  },
-  tabsContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
-  },
-  tab: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: COLORS.LIGHT_BG,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  tabActive: {
-    backgroundColor: COLORS.PRIMARY,
-    borderColor: COLORS.PRIMARY,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-  },
-  tabTextActive: {
-    color: COLORS.WHITE,
-  },
+    // Sport tabs
+    tabsRow: {
+      backgroundColor: theme.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      maxHeight: 52,
+    },
+    tabsContent: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      gap: 8,
+    },
+    tab: {
+      paddingHorizontal: 14,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    tabActive: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    tabText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    tabTextActive: {
+      color: theme.textInverse,
+    },
 
-  // League tabs
-  leagueTabsRow: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.WHITE,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  leagueTab: {
-    flex: 1,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.LIGHT_BG,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    alignItems: 'center',
-  },
-  leagueTabActive: {
-    backgroundColor: '#eef0ff',
-    borderColor: COLORS.PRIMARY,
-  },
-  leagueTabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-  },
-  leagueTabTextActive: {
-    color: COLORS.PRIMARY,
-  },
+    // League tabs
+    leagueTabsRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      gap: 8,
+    },
+    leagueTab: {
+      flex: 1,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.border,
+      alignItems: 'center',
+    },
+    leagueTabActive: {
+      backgroundColor: theme.surfaceAlt,
+      borderColor: theme.primary,
+    },
+    leagueTabText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    leagueTabTextActive: {
+      color: theme.primary,
+    },
 
-  // Grid
-  grid: {
-    flex: 1,
-  },
-  groupSection: {
-    marginTop: 12,
-    marginHorizontal: 12,
-    borderRadius: 10,
-    overflow: 'hidden',
-    backgroundColor: COLORS.WHITE,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  groupHeader: {
-    backgroundColor: COLORS.PRIMARY,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  groupHeaderText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.WHITE,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+    // Grid
+    grid: {
+      flex: 1,
+    },
+    groupSection: {
+      marginTop: 12,
+      marginHorizontal: 12,
+      borderRadius: 10,
+      overflow: 'hidden',
+      backgroundColor: theme.surface,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    groupHeader: {
+      backgroundColor: theme.primary,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+    },
+    groupHeaderText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: theme.textInverse,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
 
-  // Table — fixed-width centered layout (golf leaderboard style)
-  tableScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  colHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#f0f0f7',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-  },
-  colHeaderText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.LIGHT_TEXT,
-    textTransform: 'uppercase',
-  },
-  colHeaderStat: {
-    textAlign: 'center',
-  },
-  teamRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 9,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  teamRowAlt: {
-    backgroundColor: '#fafafa',
-  },
-  teamNameCell: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  teamLogo: {
-    width: 22,
-    height: 22,
-    flexShrink: 0,
-  },
-  teamLogoPlaceholder: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: COLORS.BORDER,
-    flexShrink: 0,
-  },
-  teamName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-  },
-  statCell: {
-    fontSize: 13,
-    color: COLORS.DARK_TEXT,
-    textAlign: 'center',
-  },
+    // Table — fixed-width centered layout (golf leaderboard style)
+    tableScrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    colHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.surfaceAlt,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    colHeaderText: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: theme.textSecondary,
+      textTransform: 'uppercase',
+    },
+    colHeaderStat: {
+      textAlign: 'center',
+    },
+    teamRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 9,
+      paddingHorizontal: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    teamRowAlt: {
+      backgroundColor: theme.surfaceAlt,
+    },
+    teamNameCell: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 7,
+    },
+    teamLogo: {
+      width: 22,
+      height: 22,
+      flexShrink: 0,
+    },
+    teamLogoPlaceholder: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: theme.border,
+      flexShrink: 0,
+    },
+    teamName: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    statCell: {
+      fontSize: 13,
+      color: theme.text,
+      textAlign: 'center',
+    },
 
-  // Empty state
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.DARK_TEXT },
-  emptySubtitle: { marginTop: 6, fontSize: 14, color: COLORS.LIGHT_TEXT },
+    // Empty state
+    emptyEmoji: { fontSize: 48, marginBottom: 12 },
+    emptyTitle: { fontSize: 18, fontWeight: '700', color: theme.text },
+    emptySubtitle: { marginTop: 6, fontSize: 14, color: theme.textSecondary },
 
-  bottomPad: { height: 24 },
-});
+    bottomPad: { height: 24 },
+  });

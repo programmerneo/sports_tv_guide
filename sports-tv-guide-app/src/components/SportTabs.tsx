@@ -6,7 +6,9 @@ import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 
 import { SportType } from '@types/index';
-import { SPORTS, COLORS } from '@constants/index';
+import { SPORTS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import { useGameStore } from '@store/gameStore';
 
 /** March Madness season window: March 14 – April 10. */
@@ -27,6 +29,8 @@ interface SportTabsProps {
 }
 
 const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onBracketPress }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const preferences = useGameStore((state) => state.preferences);
   const games = useGameStore((state) => state.games);
 
@@ -92,61 +96,62 @@ const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onB
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.WHITE,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  scrollContainer: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  contentContainer: {
-    paddingRight: 8,
-  },
-  bracketTab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#1A3358',
-    marginRight: 20,
-    gap: 4,
-  },
-  bracketIcon: {
-    fontSize: 12,
-  },
-  bracketText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#C8991D',
-  },
-  tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: COLORS.LIGHT_BG,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-    marginRight: 8,
-  },
-  tabActive: {
-    backgroundColor: COLORS.PRIMARY,
-    borderColor: COLORS.PRIMARY,
-  },
-  tabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-  },
-  tabTextActive: {
-    color: COLORS.WHITE,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.surface,
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    scrollContainer: {
+      flex: 1,
+      marginLeft: 8,
+    },
+    contentContainer: {
+      paddingRight: 8,
+    },
+    bracketTab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: '#1A3358',
+      marginRight: 20,
+      gap: 4,
+    },
+    bracketIcon: {
+      fontSize: 12,
+    },
+    bracketText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: '#C8991D',
+    },
+    tab: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: theme.background,
+      borderWidth: 1,
+      borderColor: theme.border,
+      marginRight: 8,
+    },
+    tabActive: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    tabText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    tabTextActive: {
+      color: theme.textInverse,
+    },
+  });
 
 export default SportTabs;

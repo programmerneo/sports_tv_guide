@@ -7,7 +7,7 @@
  * All data parsing is done on the backend — this component only renders.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -18,18 +18,23 @@ import {
   View,
 } from 'react-native';
 
+import { useIsDark } from '@hooks/useTheme';
 import { apiService } from '@services/api';
 import { BracketGame, BracketResponse, BracketTab, BracketTeam } from '@types/index';
 
 // --- Theme ---
 
-const BRACKET_COLORS = {
+/**
+ * Light bracket palette — the classic navy/gold March Madness identity.
+ */
+const lightBracket = {
   NAVY: '#0B1E3D',
   NAVY_LIGHT: '#132D5E',
   NAVY_MID: '#0F2749',
   GOLD: '#C8991D',
   GOLD_LIGHT: '#E8BB44',
   GOLD_DIM: 'rgba(200, 153, 29, 0.15)',
+  GOLD_BORDER: 'rgba(200, 153, 29, 0.25)',
   WHITE: '#FFFFFF',
   OFF_WHITE: '#F0EDE6',
   CARD_BG: '#FFFFFF',
@@ -40,8 +45,54 @@ const BRACKET_COLORS = {
   LIVE_BG: 'rgba(232, 53, 14, 0.12)',
   CONNECTOR: '#3A5A8C',
   SEED_BG: '#0B1E3D',
+  SEED_LOSER_BG: '#8A8A8A',
+  SEED_LOSER_TEXT: '#D0D0D0',
   FINAL_BADGE: '#2D6A4F',
   PRE_BADGE: '#4A6FA5',
+  BACK_BTN_BG: '#667eea',
+  DIVIDER: '#E0DDD5',
+  FINAL_STRIP_BG: '#F5F3ED',
+  FINAL_STRIP_TEXT: '#7A7A7A',
+  PRE_STRIP_BG: '#EBF0F7',
+  NETWORK_TEXT: '#7A8FAD',
+  TEAM_NAME: '#0B1E3D',
+  MUTED_TEXT: 'rgba(255,255,255,0.6)',
+};
+
+/**
+ * Dark bracket palette — deep charcoal surfaces with brightened gold accents,
+ * keeping the navy/gold identity legible on a dark background.
+ */
+const darkBracket: typeof lightBracket = {
+  NAVY: '#0A1424',
+  NAVY_LIGHT: '#10203B',
+  NAVY_MID: '#0D1A30',
+  GOLD: '#D9A82B',
+  GOLD_LIGHT: '#F2C75A',
+  GOLD_DIM: 'rgba(217, 168, 43, 0.18)',
+  GOLD_BORDER: 'rgba(217, 168, 43, 0.30)',
+  WHITE: '#F2F3F5',
+  OFF_WHITE: '#C9CCD2',
+  CARD_BG: '#1e2128',
+  CARD_BORDER: '#33373F',
+  WINNER_BG: '#15171c',
+  LOSER_TEXT: '#6B6F78',
+  LIVE_RED: '#FF5A36',
+  LIVE_BG: 'rgba(255, 90, 54, 0.18)',
+  CONNECTOR: '#4A6FA5',
+  SEED_BG: '#33373F',
+  SEED_LOSER_BG: '#3A3E46',
+  SEED_LOSER_TEXT: '#7A7E86',
+  FINAL_BADGE: '#4FB286',
+  PRE_BADGE: '#7FA3D6',
+  BACK_BTN_BG: '#3A4FB0',
+  DIVIDER: '#2A2E36',
+  FINAL_STRIP_BG: '#15171c',
+  FINAL_STRIP_TEXT: '#8B8F98',
+  PRE_STRIP_BG: '#15171c',
+  NETWORK_TEXT: '#8B9BB5',
+  TEAM_NAME: '#E6E8EC',
+  MUTED_TEXT: 'rgba(255,255,255,0.6)',
 };
 
 // --- Constants ---
@@ -240,12 +291,22 @@ const RoundColumn: React.FC<RoundColumnProps> = ({ games, roundIndex, label, sub
 
 // --- Main Component ---
 
+/**
+ * Active stylesheet, rebuilt per theme by the main component before render so
+ * the module-level sub-components above pick up the correct palette.
+ */
+let styles: ReturnType<typeof createStyles>;
+
 interface BracketViewProps {
   year?: number;
   onBack?: () => void;
 }
 
 const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
+  const isDark = useIsDark();
+  const c = isDark ? darkBracket : lightBracket;
+  styles = useMemo(() => createStyles(c), [c]);
+
   const [bracketData, setBracketData] = useState<BracketResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -380,7 +441,7 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={BRACKET_COLORS.GOLD} />
+        <ActivityIndicator size="large" color={c.GOLD} />
         <Text style={styles.loadingText}>Loading bracket...</Text>
       </View>
     );
@@ -467,503 +528,504 @@ const BracketView: React.FC<BracketViewProps> = ({ year, onBack }) => {
 
 // --- Styles ---
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: BRACKET_COLORS.NAVY,
-  },
+const createStyles = (c: typeof lightBracket) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.NAVY,
+    },
 
-  // Header
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 56 : 24,
-    paddingBottom: 28,
-    paddingHorizontal: 20,
-    backgroundColor: BRACKET_COLORS.NAVY,
-    alignItems: 'center',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  headerStripe: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: BRACKET_COLORS.GOLD,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: BRACKET_COLORS.WHITE,
-    letterSpacing: 4,
-  },
-  headerYear: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: BRACKET_COLORS.GOLD,
-    letterSpacing: 2,
-    marginTop: 2,
-  },
-  headerChampInfo: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.7)',
-    textAlign: 'center',
-    marginTop: 4,
-    lineHeight: 17,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'absolute',
-    left: 12,
-    bottom: 18,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    gap: 4,
-    backgroundColor: '#667eea',
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: BRACKET_COLORS.WHITE,
-  },
-  backArrow: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: BRACKET_COLORS.WHITE,
-    lineHeight: 28,
-  },
-  backLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: BRACKET_COLORS.WHITE,
-  },
+    // Header
+    header: {
+      paddingTop: Platform.OS === 'ios' ? 56 : 24,
+      paddingBottom: 28,
+      paddingHorizontal: 20,
+      backgroundColor: c.NAVY,
+      alignItems: 'center',
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    headerStripe: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 4,
+      backgroundColor: c.GOLD,
+    },
+    headerTitle: {
+      fontSize: 22,
+      fontWeight: '900',
+      color: c.WHITE,
+      letterSpacing: 4,
+    },
+    headerYear: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: c.GOLD,
+      letterSpacing: 2,
+      marginTop: 2,
+    },
+    headerChampInfo: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: 'rgba(255,255,255,0.7)',
+      textAlign: 'center',
+      marginTop: 4,
+      lineHeight: 17,
+    },
+    backButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      position: 'absolute',
+      left: 12,
+      bottom: 18,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      gap: 4,
+      backgroundColor: c.BACK_BTN_BG,
+      borderRadius: 16,
+      borderWidth: 1.5,
+      borderColor: c.WHITE,
+    },
+    backArrow: {
+      fontSize: 28,
+      fontWeight: '400',
+      color: c.WHITE,
+      lineHeight: 28,
+    },
+    backLabel: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: c.WHITE,
+    },
 
-  // Tabs
-  tabBarContainer: {
-    maxHeight: 40,
-    backgroundColor: BRACKET_COLORS.NAVY_MID,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    gap: 4,
-    height: 28,
-  },
-  tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 0,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    gap: 4,
-    height: 24,
-  },
-  tabActive: {
-    backgroundColor: BRACKET_COLORS.GOLD,
-  },
-  tabDisabled: {
-    opacity: 0.55,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'rgba(255,255,255,0.55)',
-    letterSpacing: 0.5,
-  },
-  tabTextActive: {
-    color: BRACKET_COLORS.NAVY,
-  },
-  tabTextDisabled: {
-    color: 'rgba(255,255,255,0.6)',
-  },
-  tabLiveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRACKET_COLORS.LIVE_RED,
-    borderRadius: 8,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    gap: 3,
-  },
-  tabLiveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: BRACKET_COLORS.WHITE,
-  },
-  tabLiveCount: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: BRACKET_COLORS.WHITE,
-  },
+    // Tabs
+    tabBarContainer: {
+      maxHeight: 40,
+      backgroundColor: c.NAVY_MID,
+    },
+    tabBar: {
+      flexDirection: 'row',
+      paddingHorizontal: 12,
+      alignItems: 'center',
+      gap: 4,
+      height: 28,
+    },
+    tab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 0,
+      borderRadius: 10,
+      backgroundColor: 'rgba(255,255,255,0.06)',
+      gap: 4,
+      height: 24,
+    },
+    tabActive: {
+      backgroundColor: c.GOLD,
+    },
+    tabDisabled: {
+      opacity: 0.55,
+    },
+    tabText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: 'rgba(255,255,255,0.55)',
+      letterSpacing: 0.5,
+    },
+    tabTextActive: {
+      color: c.NAVY,
+    },
+    tabTextDisabled: {
+      color: 'rgba(255,255,255,0.6)',
+    },
+    tabLiveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.LIVE_RED,
+      borderRadius: 8,
+      paddingHorizontal: 5,
+      paddingVertical: 1,
+      gap: 3,
+    },
+    tabLiveDot: {
+      width: 5,
+      height: 5,
+      borderRadius: 2.5,
+      backgroundColor: c.WHITE,
+    },
+    tabLiveCount: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: c.WHITE,
+    },
 
-  // Content
-  contentScroll: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingVertical: 16,
-    paddingBottom: 40,
-  },
+    // Content
+    contentScroll: {
+      flex: 1,
+    },
+    contentContainer: {
+      paddingVertical: 16,
+      paddingBottom: 40,
+    },
 
-  // Bracket scroll
-  bracketScroll: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    alignItems: 'flex-start',
-  },
+    // Bracket scroll
+    bracketScroll: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      alignItems: 'flex-start',
+    },
 
-  // Round column
-  roundColumn: {
-    alignItems: 'center',
-  },
-  roundLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: 'rgba(255,255,255,0.6)',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
-    marginBottom: 2,
-  },
-  roundSubtitle: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-    marginBottom: 8,
-  },
-  roundGames: {
-    alignItems: 'center',
-  },
-  cardSlot: {
-    justifyContent: 'center',
-    width: CARD_WIDTH,
-  },
+    // Round column
+    roundColumn: {
+      alignItems: 'center',
+    },
+    roundLabel: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: 'rgba(255,255,255,0.6)',
+      letterSpacing: 1.5,
+      textTransform: 'uppercase',
+      marginBottom: 2,
+    },
+    roundSubtitle: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: 'rgba(255,255,255,0.6)',
+      marginBottom: 8,
+    },
+    roundGames: {
+      alignItems: 'center',
+    },
+    cardSlot: {
+      justifyContent: 'center',
+      width: CARD_WIDTH,
+    },
 
-  // Matchup card
-  matchupCard: {
-    width: CARD_WIDTH,
-    backgroundColor: BRACKET_COLORS.CARD_BG,
-    borderRadius: 6,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: BRACKET_COLORS.CARD_BORDER,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
-  },
-  matchupCardLive: {
-    borderColor: BRACKET_COLORS.LIVE_RED,
-    borderWidth: 1.5,
-  },
+    // Matchup card
+    matchupCard: {
+      width: CARD_WIDTH,
+      backgroundColor: c.CARD_BG,
+      borderRadius: 6,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: c.CARD_BORDER,
+      ...Platform.select({
+        ios: {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 3,
+        },
+      }),
+    },
+    matchupCardLive: {
+      borderColor: c.LIVE_RED,
+      borderWidth: 1.5,
+    },
 
-  // Team rows
-  teamRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingRight: 8,
-    height: 24,
-  },
-  teamRowTop: {
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-  },
-  teamRowBottom: {
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-  },
-  teamRowWinner: {
-    backgroundColor: BRACKET_COLORS.WINNER_BG,
-  },
-  seedBadge: {
-    width: 22,
-    height: 24,
-    backgroundColor: BRACKET_COLORS.SEED_BG,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  seedBadgeLoser: {
-    backgroundColor: '#8A8A8A',
-  },
-  seedText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: BRACKET_COLORS.WHITE,
-  },
-  seedTextLoser: {
-    color: '#D0D0D0',
-  },
-  teamName: {
-    flex: 1,
-    fontSize: 11,
-    fontWeight: '600',
-    color: BRACKET_COLORS.NAVY,
-    paddingLeft: 6,
-  },
-  teamNameLoser: {
-    color: BRACKET_COLORS.LOSER_TEXT,
-  },
-  teamNameWinner: {
-    fontWeight: '800',
-    color: BRACKET_COLORS.FINAL_BADGE,
-  },
-  scoreText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: BRACKET_COLORS.NAVY,
-    minWidth: 24,
-    textAlign: 'right',
-  },
-  scoreWinner: {
-    fontWeight: '900',
-    color: BRACKET_COLORS.NAVY,
-  },
-  scoreLoser: {
-    color: BRACKET_COLORS.LOSER_TEXT,
-  },
+    // Team rows
+    teamRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingRight: 8,
+      height: 24,
+    },
+    teamRowTop: {
+      borderTopLeftRadius: 6,
+      borderTopRightRadius: 6,
+    },
+    teamRowBottom: {
+      borderBottomLeftRadius: 6,
+      borderBottomRightRadius: 6,
+    },
+    teamRowWinner: {
+      backgroundColor: c.WINNER_BG,
+    },
+    seedBadge: {
+      width: 22,
+      height: 24,
+      backgroundColor: c.SEED_BG,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    seedBadgeLoser: {
+      backgroundColor: c.SEED_LOSER_BG,
+    },
+    seedText: {
+      fontSize: 10,
+      fontWeight: '800',
+      color: c.WHITE,
+    },
+    seedTextLoser: {
+      color: c.SEED_LOSER_TEXT,
+    },
+    teamName: {
+      flex: 1,
+      fontSize: 11,
+      fontWeight: '600',
+      color: c.TEAM_NAME,
+      paddingLeft: 6,
+    },
+    teamNameLoser: {
+      color: c.LOSER_TEXT,
+    },
+    teamNameWinner: {
+      fontWeight: '800',
+      color: c.FINAL_BADGE,
+    },
+    scoreText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: c.TEAM_NAME,
+      minWidth: 24,
+      textAlign: 'right',
+    },
+    scoreWinner: {
+      fontWeight: '900',
+      color: c.TEAM_NAME,
+    },
+    scoreLoser: {
+      color: c.LOSER_TEXT,
+    },
 
-  // Divider between teams
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#E0DDD5',
-    marginLeft: 22,
-  },
+    // Divider between teams
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.DIVIDER,
+      marginLeft: 22,
+    },
 
-  // Status strips
-  liveStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: BRACKET_COLORS.LIVE_BG,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    gap: 4,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: BRACKET_COLORS.LIVE_RED,
-  },
-  liveLabel: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: BRACKET_COLORS.LIVE_RED,
-    letterSpacing: 1,
-  },
-  liveClock: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: BRACKET_COLORS.LIVE_RED,
-  },
-  finalStrip: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: '#F5F3ED',
-  },
-  finalLabel: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#7A7A7A',
-    letterSpacing: 1,
-  },
-  preStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    backgroundColor: '#EBF0F7',
-    gap: 6,
-  },
-  preLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: BRACKET_COLORS.PRE_BADGE,
-  },
-  networkLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#7A8FAD',
-  },
+    // Status strips
+    liveStrip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: c.LIVE_BG,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      gap: 4,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: c.LIVE_RED,
+    },
+    liveLabel: {
+      fontSize: 9,
+      fontWeight: '900',
+      color: c.LIVE_RED,
+      letterSpacing: 1,
+    },
+    liveClock: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: c.LIVE_RED,
+    },
+    finalStrip: {
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      backgroundColor: c.FINAL_STRIP_BG,
+    },
+    finalLabel: {
+      fontSize: 9,
+      fontWeight: '800',
+      color: c.FINAL_STRIP_TEXT,
+      letterSpacing: 1,
+    },
+    preStrip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      backgroundColor: c.PRE_STRIP_BG,
+      gap: 6,
+    },
+    preLabel: {
+      fontSize: 9,
+      fontWeight: '700',
+      color: c.PRE_BADGE,
+    },
+    networkLabel: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: c.NETWORK_TEXT,
+    },
 
-  // Connector lines
-  connectorColumn: {
-    width: CONNECTOR_WIDTH,
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 22, // offset for round label
-  },
-  connectorBlock: {
-    width: CONNECTOR_WIDTH,
-    position: 'relative',
-  },
-  connectorHLine: {
-    position: 'absolute',
-    left: 0,
-    width: CONNECTOR_WIDTH / 2,
-    height: 1.5,
-    backgroundColor: BRACKET_COLORS.CONNECTOR,
-  },
-  connectorVLine: {
-    position: 'absolute',
-    left: CONNECTOR_WIDTH / 2 - 0.75,
-    width: 1.5,
-    backgroundColor: BRACKET_COLORS.CONNECTOR,
-  },
-  connectorHLineOut: {
-    position: 'absolute',
-    left: CONNECTOR_WIDTH / 2,
-    width: CONNECTOR_WIDTH / 2,
-    height: 1.5,
-    backgroundColor: BRACKET_COLORS.CONNECTOR,
-  },
+    // Connector lines
+    connectorColumn: {
+      width: CONNECTOR_WIDTH,
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      paddingTop: 22, // offset for round label
+    },
+    connectorBlock: {
+      width: CONNECTOR_WIDTH,
+      position: 'relative',
+    },
+    connectorHLine: {
+      position: 'absolute',
+      left: 0,
+      width: CONNECTOR_WIDTH / 2,
+      height: 1.5,
+      backgroundColor: c.CONNECTOR,
+    },
+    connectorVLine: {
+      position: 'absolute',
+      left: CONNECTOR_WIDTH / 2 - 0.75,
+      width: 1.5,
+      backgroundColor: c.CONNECTOR,
+    },
+    connectorHLineOut: {
+      position: 'absolute',
+      left: CONNECTOR_WIDTH / 2,
+      width: CONNECTOR_WIDTH / 2,
+      height: 1.5,
+      backgroundColor: c.CONNECTOR,
+    },
 
-  // Final Four
-  finalFourContainer: {
-    alignItems: 'center',
-  },
-  finalFourBanner: {
-    alignItems: 'center',
-    marginBottom: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    backgroundColor: BRACKET_COLORS.GOLD_DIM,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(200, 153, 29, 0.25)',
-  },
-  finalFourTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: BRACKET_COLORS.GOLD_LIGHT,
-    letterSpacing: 4,
-  },
-  finalFourSubtitle: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 4,
-  },
-  championBanner: {
-    alignItems: 'center',
-    marginTop: 24,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    backgroundColor: BRACKET_COLORS.GOLD_DIM,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: BRACKET_COLORS.GOLD,
-  },
-  championCrown: {
-    fontSize: 32,
-    marginBottom: 6,
-  },
-  championLabel: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: BRACKET_COLORS.GOLD,
-    letterSpacing: 3,
-    marginBottom: 4,
-  },
-  championName: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: BRACKET_COLORS.WHITE,
-    textAlign: 'center',
-  },
+    // Final Four
+    finalFourContainer: {
+      alignItems: 'center',
+    },
+    finalFourBanner: {
+      alignItems: 'center',
+      marginBottom: 20,
+      paddingVertical: 12,
+      paddingHorizontal: 32,
+      backgroundColor: c.GOLD_DIM,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.GOLD_BORDER,
+    },
+    finalFourTitle: {
+      fontSize: 20,
+      fontWeight: '900',
+      color: c.GOLD_LIGHT,
+      letterSpacing: 4,
+    },
+    finalFourSubtitle: {
+      fontSize: 11,
+      fontWeight: '500',
+      color: 'rgba(255,255,255,0.6)',
+      marginTop: 4,
+    },
+    championBanner: {
+      alignItems: 'center',
+      marginTop: 24,
+      paddingVertical: 16,
+      paddingHorizontal: 32,
+      backgroundColor: c.GOLD_DIM,
+      borderRadius: 12,
+      borderWidth: 1.5,
+      borderColor: c.GOLD,
+    },
+    championCrown: {
+      fontSize: 32,
+      marginBottom: 6,
+    },
+    championLabel: {
+      fontSize: 10,
+      fontWeight: '900',
+      color: c.GOLD,
+      letterSpacing: 3,
+      marginBottom: 4,
+    },
+    championName: {
+      fontSize: 18,
+      fontWeight: '900',
+      color: c.WHITE,
+      textAlign: 'center',
+    },
 
-  // First Four
-  firstFourContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  firstFourBanner: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  firstFourTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: BRACKET_COLORS.WHITE,
-    letterSpacing: 3,
-  },
-  firstFourSubtitle: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: 'rgba(255,255,255,0.6)',
-    marginTop: 2,
-  },
-  firstFourGrid: {
-    gap: 12,
-    width: '100%',
-    maxWidth: 340,
-  },
-  firstFourCard: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  firstFourNetwork: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.6)',
-  },
+    // First Four
+    firstFourContainer: {
+      alignItems: 'center',
+      paddingHorizontal: 16,
+    },
+    firstFourBanner: {
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    firstFourTitle: {
+      fontSize: 18,
+      fontWeight: '900',
+      color: c.WHITE,
+      letterSpacing: 3,
+    },
+    firstFourSubtitle: {
+      fontSize: 11,
+      fontWeight: '500',
+      color: 'rgba(255,255,255,0.6)',
+      marginTop: 2,
+    },
+    firstFourGrid: {
+      gap: 12,
+      width: '100%',
+      maxWidth: 340,
+    },
+    firstFourCard: {
+      alignItems: 'center',
+      gap: 4,
+    },
+    firstFourNetwork: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: 'rgba(255,255,255,0.6)',
+    },
 
-  // States
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: BRACKET_COLORS.NAVY,
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-    fontWeight: '500',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: BRACKET_COLORS.NAVY,
-    gap: 12,
-    paddingHorizontal: 32,
-  },
-  errorEmoji: {
-    fontSize: 48,
-  },
-  errorTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: BRACKET_COLORS.WHITE,
-    textAlign: 'center',
-  },
-  retryButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: BRACKET_COLORS.GOLD,
-    borderRadius: 20,
-    marginTop: 8,
-  },
-  retryText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BRACKET_COLORS.NAVY,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
-    textAlign: 'center',
-    marginTop: 40,
-  },
-});
+    // States
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.NAVY,
+      gap: 12,
+    },
+    loadingText: {
+      fontSize: 14,
+      color: 'rgba(255,255,255,0.6)',
+      fontWeight: '500',
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: c.NAVY,
+      gap: 12,
+      paddingHorizontal: 32,
+    },
+    errorEmoji: {
+      fontSize: 48,
+    },
+    errorTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: c.WHITE,
+      textAlign: 'center',
+    },
+    retryButton: {
+      paddingHorizontal: 24,
+      paddingVertical: 10,
+      backgroundColor: c.GOLD,
+      borderRadius: 20,
+      marginTop: 8,
+    },
+    retryText: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: c.NAVY,
+    },
+    emptyText: {
+      fontSize: 14,
+      color: 'rgba(255,255,255,0.6)',
+      textAlign: 'center',
+      marginTop: 40,
+    },
+  });
 
 export default BracketView;

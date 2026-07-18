@@ -3,7 +3,7 @@
  * For golf events, shows the tournament leaderboard (top 30)
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -17,7 +17,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Game, GameSummary, GolfLeaderboard, GolfLeaderboardEntry } from '@types/index';
-import { COLORS, SPORTS, GAME_REFRESH_INTERVAL } from '@constants/index';
+import { SPORTS, GAME_REFRESH_INTERVAL } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useGameStore } from '@store/gameStore';
 import { apiService } from '@services/api';
 
 interface BoxScoreModalProps {
@@ -78,10 +81,16 @@ export const ensureContrastingColors = (away: string, home: string): [string, st
 };
 
 const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const insets = useSafeAreaInsets();
   const [gameSummary, setGameSummary] = useState<GameSummary>(game as GameSummary);
   const [golfLeaderboard, setGolfLeaderboard] = useState<GolfLeaderboard | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const favoriteGames = useGameStore((s) => s.preferences.favoriteGames);
+  const toggleFavoriteGame = useGameStore((s) => s.toggleFavoriteGame);
+  const isFavorite = favoriteGames.includes(game.id);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -638,7 +647,16 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
           <Text style={styles.headerTitle}>
             {isGolf ? 'Tournament Leaderboard' : 'Game Details'}
           </Text>
-          <View style={styles.headerSpacer} />
+          <TouchableOpacity
+            onPress={() => toggleFavoriteGame(game.id)}
+            style={styles.favoriteButton}
+            accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={[styles.favoriteStar, isFavorite && styles.favoriteStarActive]}>
+              {isFavorite ? '★' : '☆'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
@@ -654,7 +672,7 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
 
         {loading && (
           <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={COLORS.PRIMARY} />
+            <ActivityIndicator size="large" color={theme.primary} />
           </View>
         )}
       </View>
@@ -662,13 +680,14 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.LIGHT_BG,
+    backgroundColor: theme.background,
   },
   header: {
-    backgroundColor: COLORS.PRIMARY,
+    backgroundColor: theme.primary,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -682,15 +701,27 @@ const styles = StyleSheet.create({
   closeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.WHITE,
+    color: theme.textInverse,
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: COLORS.WHITE,
+    color: theme.textInverse,
   },
   headerSpacer: {
     width: 60,
+  },
+  favoriteButton: {
+    width: 60,
+    alignItems: 'flex-end',
+    padding: 8,
+  },
+  favoriteStar: {
+    fontSize: 22,
+    color: theme.textSecondary,
+  },
+  favoriteStarActive: {
+    color: theme.secondary,
   },
   content: {
     flex: 1,
@@ -700,7 +731,7 @@ const styles = StyleSheet.create({
 
   // ── Golf Tournament Header ─────────────────────────────────────────────────
   golfTournamentHeader: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -713,18 +744,18 @@ const styles = StyleSheet.create({
   golfTournamentName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     textAlign: 'center',
     marginBottom: 4,
   },
   golfCourseName: {
     fontSize: 14,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     textAlign: 'center',
     marginBottom: 8,
   },
   golfStatusBadge: {
-    backgroundColor: COLORS.LIGHT_BG,
+    backgroundColor: theme.background,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -733,14 +764,14 @@ const styles = StyleSheet.create({
   golfStatusText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
   },
   golfStatusLive: {
-    color: COLORS.LIVE_RED,
+    color: theme.live,
   },
   golfRoundInfo: {
     fontSize: 13,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 4,
   },
 
@@ -755,7 +786,7 @@ const styles = StyleSheet.create({
   },
   leaderboardHeaderRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.PRIMARY,
+    backgroundColor: theme.primary,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
     paddingVertical: 10,
@@ -765,26 +796,26 @@ const styles = StyleSheet.create({
   leaderboardHeaderText: {
     fontSize: 11,
     fontWeight: 'bold',
-    color: COLORS.WHITE,
+    color: theme.textInverse,
   },
   leaderboardRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
+    borderBottomColor: theme.border,
     alignItems: 'center',
   },
   leaderboardRowEven: {
-    backgroundColor: '#fafafa',
+    backgroundColor: theme.surfaceAlt,
   },
   leaderboardRowTop3: {
-    backgroundColor: '#f0f4ff',
+    backgroundColor: theme.background,
   },
   leaderboardCell: {
     fontSize: 13,
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
   },
   lbPos: {
     width: 36,
@@ -792,7 +823,7 @@ const styles = StyleSheet.create({
   },
   lbPosTop3: {
     fontWeight: 'bold',
-    color: COLORS.PRIMARY,
+    color: theme.primary,
   },
   lbName: {
     width: 160,
@@ -814,7 +845,7 @@ const styles = StyleSheet.create({
   },
   lbCountry: {
     fontSize: 10,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 1,
   },
   lbScore: {
@@ -842,7 +873,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   noLeaderboard: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 24,
     alignItems: 'center',
@@ -851,17 +882,17 @@ const styles = StyleSheet.create({
   noLeaderboardText: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     marginBottom: 4,
   },
   noLeaderboardSubtext: {
     fontSize: 13,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
 
   // ── Starting Pitchers (Baseball) ────────────────────────────────────────────
   pitchersSection: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -885,12 +916,12 @@ const styles = StyleSheet.create({
   pitcherName: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     textAlign: 'center',
   },
   pitcherJersey: {
     fontSize: 11,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 2,
   },
   pitcherStats: {
@@ -899,18 +930,18 @@ const styles = StyleSheet.create({
   },
   pitcherStatText: {
     fontSize: 11,
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     fontWeight: '500',
   },
   pitcherTBD: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   pitcherVs: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginHorizontal: 4,
   },
 
@@ -919,7 +950,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -938,16 +969,16 @@ const styles = StyleSheet.create({
   teamNameLarge: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     textAlign: 'center',
   },
   rankText: {
     fontWeight: 'normal',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   recordLarge: {
     fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 4,
   },
   scoreCenter: {
@@ -960,32 +991,32 @@ const styles = StyleSheet.create({
   scoreStatus: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.LIVE_RED,
+    color: theme.live,
     marginTop: 4,
   },
   scoreStatusFinal: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 4,
   },
   scoreLarge: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: COLORS.PRIMARY,
+    color: theme.primary,
   },
   scoreLive: {
-    color: COLORS.LIVE_RED,
+    color: theme.live,
   },
   liveLabel: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.LIVE_RED,
+    color: theme.live,
     marginTop: 2,
   },
   scoreSeparator: {
     fontSize: 32,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginHorizontal: 8,
   },
   teamLogoImage: {
@@ -1001,25 +1032,25 @@ const styles = StyleSheet.create({
   pregameTime: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
   },
   pregameSpread: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   pregameOverUnder: {
     fontSize: 14,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   pregameNetwork: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     marginTop: 4,
   },
   predictorSection: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -1027,7 +1058,7 @@ const styles = StyleSheet.create({
   predictorTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginBottom: 8,
   },
   predictorBarContainer: {
@@ -1057,16 +1088,16 @@ const styles = StyleSheet.create({
   predictorPct: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
   },
   predictorFavored: {
     fontSize: 9,
     fontWeight: 'bold',
-    color: COLORS.LIVE_RED,
+    color: theme.live,
     letterSpacing: 0.5,
   },
   infoSection: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -1076,16 +1107,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
+    borderBottomColor: theme.border,
   },
   infoLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   infoValue: {
     fontSize: 12,
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     fontWeight: '500',
   },
   infoValueColumn: {
@@ -1093,7 +1124,7 @@ const styles = StyleSheet.create({
   },
   infoValueSecondary: {
     fontSize: 11,
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
     marginTop: 2,
   },
   boxScoreSection: {
@@ -1102,11 +1133,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     marginBottom: 12,
   },
   teamStatsBox: {
-    backgroundColor: COLORS.WHITE,
+    backgroundColor: theme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
@@ -1114,7 +1145,7 @@ const styles = StyleSheet.create({
   teamStatsName: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: COLORS.PRIMARY,
+    color: theme.primary,
     marginBottom: 8,
   },
   statsGrid: {
@@ -1124,7 +1155,7 @@ const styles = StyleSheet.create({
   },
   statItem: {
     width: '23%',
-    backgroundColor: COLORS.LIGHT_BG,
+    backgroundColor: theme.background,
     borderRadius: 6,
     padding: 8,
     alignItems: 'center',
@@ -1132,16 +1163,16 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 10,
     fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
+    color: theme.textSecondary,
   },
   statValue: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
+    color: theme.text,
     marginTop: 2,
   },
   notifyButtonLarge: {
-    backgroundColor: COLORS.PRIMARY,
+    backgroundColor: theme.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -1150,18 +1181,18 @@ const styles = StyleSheet.create({
   notifyButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: COLORS.WHITE,
+    color: theme.textInverse,
   },
   spacer: {
     height: 20,
   },
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: theme.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 12,
   },
-});
+  });
 
 export default BoxScoreModal;

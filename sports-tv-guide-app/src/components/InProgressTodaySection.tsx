@@ -6,7 +6,10 @@ import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView, Text, TouchableOpacity, Image } from 'react-native';
 
 import { Game } from '@types/index';
-import { COLORS, SPORTS } from '@constants/index';
+import { SPORTS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import { useGameStore } from '@store/gameStore';
 import BoxScoreModal from './BoxScoreModal';
 
 interface InProgressTodaySectionProps {
@@ -14,6 +17,10 @@ interface InProgressTodaySectionProps {
 }
 
 const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const favoriteGames = useGameStore((s) => s.preferences.favoriteGames);
+  const toggleFavoriteGame = useGameStore((s) => s.toggleFavoriteGame);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
 
   const formatCountdown = (startTime: string): string => {
@@ -79,6 +86,30 @@ const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }
                   onPress={() => setSelectedGame(game)}
                   activeOpacity={0.7}
                 >
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      toggleFavoriteGame(game.id);
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel={
+                      favoriteGames.includes(game.id)
+                        ? 'Remove from favorites'
+                        : 'Add to favorites'
+                    }
+                    accessibilityRole="button"
+                  >
+                    <Text
+                      style={[
+                        styles.favoriteStar,
+                        favoriteGames.includes(game.id) && styles.favoriteStarActive,
+                      ]}
+                    >
+                      {favoriteGames.includes(game.id) ? '★' : '☆'}
+                    </Text>
+                  </TouchableOpacity>
+
                   <View style={styles.gameHeader}>
                     <Text style={styles.networkText}>{game.network}</Text>
                     <Text
@@ -167,155 +198,172 @@ const InProgressTodaySection: React.FC<InProgressTodaySectionProps> = ({ games }
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.WHITE,
-    paddingVertical: 12,
-    marginBottom: 8,
-  },
-  header: {
-    marginBottom: 12,
-    paddingHorizontal: 16,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-    textTransform: 'uppercase',
-  },
-  scrollContainer: {
-    marginBottom: 8,
-  },
-  contentContainer: {
-    paddingLeft: 16,
-    paddingRight: 16,
-    alignItems: 'center',
-  },
-  sportDivider: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-  },
-  dividerLine: {
-    width: 1,
-    height: 80,
-    backgroundColor: COLORS.BORDER,
-  },
-  sportLabelContainer: {
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  sportLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.LIGHT_TEXT,
-    textTransform: 'uppercase',
-  },
-  gameCard: {
-    backgroundColor: COLORS.LIGHT_BG,
-    borderRadius: 12,
-    padding: 12,
-    marginRight: 8,
-    width: 140,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.PRIMARY,
-  },
-  gameHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  networkText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-  },
-  countdown: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.PRIMARY,
-    backgroundColor: COLORS.LIGHT_BG,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  countdownLive: {
-    color: COLORS.LIVE_RED,
-    backgroundColor: '#fff0f0',
-  },
-  golfMatchup: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  golfEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  golfTournament: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    textAlign: 'center',
-  },
-  matchup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  team: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  teamLogo: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-    marginBottom: 2,
-  },
-  teamEmoji: {
-    fontSize: 28,
-    marginBottom: 2,
-  },
-  teamName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-  },
-  vs: {
-    fontSize: 10,
-    color: COLORS.LIGHT_TEXT,
-    marginHorizontal: 4,
-  },
-  liveScore: {
-    backgroundColor: COLORS.PRIMARY,
-    borderRadius: 8,
-    padding: 6,
-    alignItems: 'center',
-  },
-  score: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  quarter: {
-    fontSize: 10,
-    color: COLORS.WHITE,
-    marginTop: 2,
-  },
-  finalScore: {
-    backgroundColor: COLORS.LIGHT_TEXT,
-    borderRadius: 8,
-    padding: 6,
-    alignItems: 'center',
-  },
-  finalLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-    marginTop: 2,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.surface,
+      paddingVertical: 12,
+      marginBottom: 8,
+    },
+    header: {
+      marginBottom: 12,
+      paddingHorizontal: 16,
+    },
+    title: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      textTransform: 'uppercase',
+    },
+    scrollContainer: {
+      marginBottom: 8,
+    },
+    contentContainer: {
+      paddingLeft: 16,
+      paddingRight: 16,
+      alignItems: 'center',
+    },
+    sportDivider: {
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: 4,
+    },
+    dividerLine: {
+      width: 1,
+      height: 80,
+      backgroundColor: theme.border,
+    },
+    sportLabelContainer: {
+      justifyContent: 'center',
+      marginRight: 8,
+    },
+    sportLabel: {
+      fontSize: 11,
+      fontWeight: '700',
+      color: theme.textSecondary,
+      textTransform: 'uppercase',
+    },
+    gameCard: {
+      backgroundColor: theme.background,
+      borderRadius: 12,
+      padding: 12,
+      marginRight: 8,
+      width: 140,
+      borderLeftWidth: 4,
+      borderLeftColor: theme.primary,
+    },
+    gameHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+      paddingRight: 18,
+    },
+    favoriteButton: {
+      position: 'absolute',
+      top: 4,
+      right: 4,
+      zIndex: 2,
+      padding: 2,
+    },
+    favoriteStar: {
+      fontSize: 16,
+      lineHeight: 18,
+      color: theme.textSecondary,
+    },
+    favoriteStarActive: {
+      color: theme.secondary,
+    },
+    networkText: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    countdown: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: theme.primary,
+      backgroundColor: theme.background,
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    countdownLive: {
+      color: theme.live,
+      backgroundColor: theme.surfaceAlt,
+    },
+    golfMatchup: {
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    golfEmoji: {
+      fontSize: 24,
+      marginBottom: 4,
+    },
+    golfTournament: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.text,
+      textAlign: 'center',
+    },
+    matchup: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    team: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    teamLogo: {
+      width: 28,
+      height: 28,
+      borderRadius: 4,
+      marginBottom: 2,
+    },
+    teamEmoji: {
+      fontSize: 28,
+      marginBottom: 2,
+    },
+    teamName: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    vs: {
+      fontSize: 10,
+      color: theme.textSecondary,
+      marginHorizontal: 4,
+    },
+    liveScore: {
+      backgroundColor: theme.primary,
+      borderRadius: 8,
+      padding: 6,
+      alignItems: 'center',
+    },
+    score: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    quarter: {
+      fontSize: 10,
+      color: theme.textInverse,
+      marginTop: 2,
+    },
+    finalScore: {
+      backgroundColor: theme.textSecondary,
+      borderRadius: 8,
+      padding: 6,
+      alignItems: 'center',
+    },
+    finalLabel: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+      marginTop: 2,
+    },
+  });
 
 export default InProgressTodaySection;
