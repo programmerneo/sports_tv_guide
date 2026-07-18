@@ -21,16 +21,12 @@ Track of what's in progress and what still needs work.
 **Estimated:** 1-2 hours
 
 #### Favorites Functionality
-- 📋 Implement FavoritesScreen
-  - [ ] Display saved games
-  - [ ] Display favorite teams
-  - [ ] Remove from favorites button
-  - [ ] Filter by sport
-  - [ ] Sort by date
-- 📋 Connect to store (already wired, needs UI)
-- 📋 Save to AsyncStorage for persistence
+FavoritesScreen is shipped: shows saved games (sorted by start time), star toggle to
+add/remove, wired to the store, and persisted via AsyncStorage. Remaining:
+- [ ] Display favorite teams (currently games only)
+- [ ] Filter by sport
 
-**Estimated:** 2-3 hours
+**Estimated:** 1 hour
 
 #### Search Functionality
 - 📋 Implement SearchScreen
@@ -43,10 +39,9 @@ Track of what's in progress and what still needs work.
 **Estimated:** 2-3 hours
 
 #### Settings/Profile
-- 📋 Implement ProfileScreen
+- 📋 Expand ProfileScreen (dark mode toggle already shipped)
   - [ ] Edit timezone selection
   - [ ] Toggle notifications
-  - [ ] Toggle dark mode
   - [ ] View favorite teams list
   - [ ] Clear cache button
 
@@ -63,16 +58,6 @@ Track of what's in progress and what still needs work.
 **Estimated:** 3-4 hours
 
 ### Medium Priority
-
-#### Data Persistence
-- 📋 Save preferences to AsyncStorage
-  - [ ] Favorites list
-  - [ ] Selected sports
-  - [ ] Timezone preference
-  - [ ] Notification settings
-- 📋 Load on app start
-
-**Estimated:** 1-2 hours
 
 #### Offline Support
 - 📋 Cache games data locally
@@ -122,12 +107,11 @@ Track of what's in progress and what still needs work.
 **Estimated:** 2-3 hours
 
 #### Dark Mode
-- 📋 Implement dark theme
-- 📋 Color scheme for dark mode
-- 📋 System theme detection
-- 📋 User preference toggle
+Dark theme, color scheme (`constants/theme.ts`), and the Profile toggle are shipped.
+Remaining:
+- [ ] System theme detection (follow OS light/dark via `Appearance`/`useColorScheme`)
 
-**Estimated:** 2 hours
+**Estimated:** 30 min
 
 #### App Icons & Splash Screen
 - 📋 Generate app icons (multiple sizes)
@@ -195,23 +179,21 @@ Track of what's in progress and what still needs work.
 
 **Week 1:**
 1. College football standings
-2. Implement Favorites functionality (High ROI)
-3. Add data persistence with AsyncStorage
+2. Finish Favorites (favorite-teams list + sport filter)
 
 **Week 2:**
-4. Implement Search
-5. Implement Notifications UI + logic
-6. Add error boundaries
+3. Implement Search
+4. Implement Notifications UI + logic
+5. Add error boundaries
 
 **Week 3:**
-7. Profile/Settings screen
-8. Testing suite
-9. Dark mode
+6. Profile/Settings screen
+7. Testing suite
 
 **Week 4:**
-10. Polish UI/animations
-11. Accessibility improvements
-12. App icons/splash screen
+8. Polish UI/animations
+9. Accessibility improvements
+10. App icons/splash screen
 
 ---
 
@@ -221,12 +203,10 @@ Track of what's in progress and what still needs work.
 - [ ] Favorites functionality
 - [ ] Search capability
 - [ ] Notification reminders
-- [ ] Data persistence
 - [ ] Settings/profile
 - [ ] Full test coverage
 
 ### V1.1 (Later)
-- [ ] Dark mode
 - [ ] Offline support
 - [ ] Advanced search
 - [ ] Social features
@@ -322,6 +302,6 @@ Before implementing new features, consider:
 
 ---
 
-**Last Updated:** May 16, 2026
+**Last Updated:** July 18, 2026
 **Current Status:** Feature Development Phase
-**Next Priority:** College Football Standings + Favorites + Search
+**Next Priority:** College Football Standings + Search (Favorites, dark mode & persistence shipped)

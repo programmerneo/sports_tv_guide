@@ -10,10 +10,11 @@ A modern, mobile-first sports broadcast TV guide application built with **Expo**
 - ⏱️ **Live Games Section** - Upcoming games at the top with countdown timers
 - 📊 **Box Score Details** - Detailed game statistics and play-by-play
 - 🔔 **Notifications** - Set reminders for favorite teams and games
-- ⭐ **Favorites** - Save favorite teams and games for quick access
+- ⭐ **Favorites** - Save favorite teams and games for quick access (persisted across restarts)
 - 🌐 **Timezone-Aware** - Displays times in user's local timezone
 - 📱 **Responsive Design** - Optimized for mobile devices
 - 🎨 **Modern UI** - Clean, intuitive interface
+- 🌓 **Dark Mode** - Light/dark themes with a toggle in Profile
 
 ---
 
@@ -267,16 +268,20 @@ sports-tv-guide-app/
 │   │   └── ProfileScreen.tsx
 │   ├── services/         # API and external service clients
 │   │   └── api.ts        # FastAPI backend client
-│   ├── store/            # State management (Zustand)
-│   │   └── gameStore.ts  # Game state and selectors
+│   ├── store/            # State management (Zustand + persist)
+│   │   └── gameStore.ts  # Game state, selectors, persisted preferences
+│   ├── hooks/            # Reusable hooks
+│   │   └── useTheme.ts   # Resolves active light/dark theme from preferences
 │   ├── constants/
-│   │   └── index.ts      # API URL, sports, colors, cache TTLs
+│   │   ├── index.ts      # API URL, sports, legacy COLORS, cache TTLs
+│   │   └── theme.ts      # Light/dark theme tokens (lightTheme / darkTheme)
 │   └── types/
 │       └── index.ts
 ├── app.json              # Expo configuration
 ├── package.json          # Dependencies and scripts
 ├── tsconfig.json         # TypeScript configuration
 ├── babel.config.js       # Babel configuration
+├── metro.config.js       # Metro config (forces zustand CJS on web — see Troubleshooting)
 └── README.md             # This file
 ```
 
@@ -365,6 +370,13 @@ useGameStore((state) => state.setPreferences({ ... }));
 useGameStore((state) => state.toggleFavoriteGame(gameId));
 ```
 
+### Persistence
+
+User preferences (favorites, dark mode, selected sports, timezone) are persisted via
+Zustand's `persist` middleware backed by AsyncStorage, so they survive app restarts.
+Only the `preferences` slice is saved; fetched `games` and transient UI state are not.
+On web this maps to the browser's `localStorage`. See [DEVELOPMENT.md](./DEVELOPMENT.md#persistence).
+
 ### Caching Strategy
 
 Defined in [`src/constants/index.ts`](src/constants/index.ts) (`CACHE_DURATION`):
@@ -382,11 +394,17 @@ Defined in [`src/constants/index.ts`](src/constants/index.ts) (`CACHE_DURATION`)
 ## ⚙️ Customization
 
 ### Change Colors
-File: `src/constants/index.ts`
+File: `src/constants/theme.ts` — edit the `lightTheme` / `darkTheme` tokens:
 ```typescript
-PRIMARY: '#667eea',     // Change this
-LIVE_RED: '#ff4444',    // Or this
+export const lightTheme: ThemeColors = {
+  primary: '#667eea',   // Change this
+  live: '#ff4444',      // Or this
+  // ...
+};
 ```
+Components read these via the `useTheme()` hook, so edits apply everywhere and in
+both light and dark mode. (The legacy `COLORS` map in `src/constants/index.ts` is
+kept only for backward compatibility.)
 
 ### Change API URL
 Set the `EXPO_PUBLIC_API_URL` environment variable before starting Expo:
@@ -463,6 +481,18 @@ If you see the banner **"Cannot reach API at http://localhost:3001 — is the ba
 2. Confirm the backend started on the expected port. `uv run python main.py` honors `settings.port` (default 3001); `fastapi dev main.py` without `--port 3001` will silently use 8000.
 3. If you've overridden `EXPO_PUBLIC_API_URL`, double-check it matches the backend's host and port.
 4. Check firewall settings allow connection.
+
+### Issue: Web shows "Cannot use 'import.meta' outside a module"
+
+Zustand's ESM build uses `import.meta`, which is invalid in Expo's classic-script web
+bundle. [`metro.config.js`](./metro.config.js) already forces zustand's CommonJS build
+on web to prevent this. If you still hit it, restart Metro with a cleared cache:
+
+```bash
+npx expo start --web --clear
+```
+
+Then hard-refresh the browser (Ctrl+Shift+R). Native builds are unaffected.
 
 ### Issue: TypeScript errors
 

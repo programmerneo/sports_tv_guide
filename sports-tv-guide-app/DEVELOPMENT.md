@@ -32,16 +32,19 @@ function updateScore(game, homeScore, awayScore) {
 
 ### Component Structure
 
-All components follow this structure:
+All components follow this structure. Styles are **theme-aware**: build them from
+the active theme with a `createStyles(theme)` factory so the component re-styles
+automatically when the user toggles dark mode (see [Styling Patterns](#styling-patterns)).
 
 ```typescript
 /**
  * Component description - what it does and where it's used
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { COLORS } from '@constants/index';
+import { useTheme } from '@/hooks/useTheme';
+import { ThemeColors } from '@constants/theme';
 
 interface ComponentProps {
   title: string;
@@ -49,12 +52,10 @@ interface ComponentProps {
   count?: number;
 }
 
-const MyComponent: React.FC<ComponentProps> = ({
-  title,
-  onPress,
-  count = 0,
-}) => {
-  // Implementation
+const MyComponent: React.FC<ComponentProps> = ({ title, onPress, count = 0 }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{title}</Text>
@@ -62,18 +63,19 @@ const MyComponent: React.FC<ComponentProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.WHITE,
-    padding: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+      padding: 16,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+  });
 
 export default MyComponent;
 ```
@@ -130,6 +132,22 @@ export const getLiveGames = (state: GameState): Game[] => {
 const liveGames = useGameStore((state) => getLiveGames(state));
 ```
 
+Current selectors include `getAllGames`, `getLiveGames`, `getUpcomingGames`,
+`getGamesBySport`, and `getFavoriteGames` (games favorited directly or via a
+favorited team).
+
+### Persistence
+
+User preferences are persisted with Zustand's `persist` middleware
+(`src/store/gameStore.ts`), backed by `@react-native-async-storage/async-storage`.
+Only the `preferences` slice is persisted (via `partialize`) — favorites, dark mode,
+selected sports, and timezone survive app restarts. Volatile state (`games`,
+`loading`, `error`, `selectedGame`) is intentionally **not** persisted; `games` is a
+`Map`, which JSON cannot serialize anyway.
+
+On web, AsyncStorage maps to the browser's `localStorage`; on native it uses the
+platform's native store. No code changes are needed per platform.
+
 ## API Integration
 
 ### Adding New API Methods
@@ -161,21 +179,45 @@ class ApiService {
 
 ## Styling Patterns
 
-### Using Colors
+### Using Colors (Theme-Aware)
+
+Colors come from the active theme, not hard-coded values. Read the theme with the
+`useTheme()` hook and build styles from it via a `createStyles(theme)` factory. This
+is what makes light/dark mode work — toggling `preferences.darkModeEnabled` swaps the
+theme and every component re-styles.
 
 ```typescript
-import { COLORS } from '@constants/index';
+import React, { useMemo } from 'react';
+import { StyleSheet } from 'react-native';
+import { useTheme, useIsDark } from '@/hooks/useTheme';
+import { ThemeColors } from '@constants/theme';
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.PRIMARY,
-    borderColor: COLORS.BORDER,
-  },
-  text: {
-    color: COLORS.DARK_TEXT,
-  },
-});
+const MyComponent = () => {
+  const theme = useTheme();
+  const isDark = useIsDark(); // optional — only when a style depends on the mode
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  // ...render using styles
+};
+
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.primary,
+      borderColor: theme.border,
+    },
+    text: {
+      color: theme.text,
+    },
+  });
 ```
+
+- **Theme tokens** (semantic names like `background`, `surface`, `card`, `text`,
+  `textSecondary`, `border`, `primary`, `live`) are defined in
+  [`src/constants/theme.ts`](src/constants/theme.ts) as `lightTheme` / `darkTheme`.
+- `useTheme()` / `useIsDark()` live in [`src/hooks/useTheme.ts`](src/hooks/useTheme.ts)
+  and resolve the active theme from `preferences.darkModeEnabled` in the store.
+- The legacy `COLORS` export in `src/constants/index.ts` is kept only for backward
+  compatibility — **use the theme in new code.**
 
 ### Responsive Layout
 
