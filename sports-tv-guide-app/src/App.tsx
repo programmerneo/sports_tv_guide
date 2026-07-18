@@ -12,11 +12,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import HomeScreen from '@screens/HomeScreen';
 import BracketScreen from '@screens/BracketScreen';
 import StandingsScreen from '@screens/StandingsScreen';
-import SearchScreen from '@screens/SearchScreen';
+import FavoritesScreen from '@screens/FavoritesScreen';
 import NotificationsScreen from '@screens/NotificationsScreen';
 import ProfileScreen from '@screens/ProfileScreen';
 
 import { useGameStore } from '@store/gameStore';
+import { useTheme } from '@/hooks/useTheme';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -42,15 +43,17 @@ function HomeStack() {
  * Bottom Tab Navigator
  */
 function BottomTabs() {
+  const theme = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#667eea',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: theme.primary,
+        tabBarInactiveTintColor: theme.tabInactive,
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#e0e0e0',
+          backgroundColor: theme.tabBar,
+          borderTopColor: theme.tabBarBorder,
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,
@@ -81,12 +84,12 @@ function BottomTabs() {
         }}
       />
       <Tab.Screen
-        name="Search"
-        component={SearchScreen}
+        name="Favorites"
+        component={FavoritesScreen}
         options={{
-          title: 'Search',
-          tabBarLabel: 'Search',
-          tabBarIcon: ({ color, size }) => <Text style={{ fontSize: size, color }}>🔍</Text>,
+          title: 'Favorites',
+          tabBarLabel: 'Favorites',
+          tabBarIcon: ({ color, size }) => <Text style={{ fontSize: size, color }}>⭐</Text>,
         }}
       />
       <Tab.Screen

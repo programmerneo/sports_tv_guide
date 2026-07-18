@@ -14,7 +14,9 @@ import {
 } from 'react-native';
 
 import { Game } from '@types/index';
-import { COLORS, SPORTS, TIME_SLOTS } from '@constants/index';
+import { SPORTS, TIME_SLOTS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 import BoxScoreModal from './BoxScoreModal';
 
 const HEADER_HEIGHT = 50;
@@ -25,6 +27,8 @@ interface TVGuideGridProps {
 }
 
 const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
   const hasScrolled = useRef(false);
@@ -315,193 +319,194 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.WHITE,
-    marginHorizontal: 8,
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  timeColumnHeader: {
-    width: 50,
-  },
-  headerCell: {
-    backgroundColor: COLORS.PRIMARY,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-    borderRightWidth: 1,
-    borderRightColor: COLORS.BORDER,
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: HEADER_HEIGHT,
-    paddingHorizontal: 8,
-  },
-  sportHeaderText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.WHITE,
-    textAlign: 'center',
-  },
-  timeCell: {
-    width: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-    borderRightWidth: 1,
-    borderRightColor: COLORS.BORDER,
-    backgroundColor: COLORS.LIGHT_BG,
-    paddingHorizontal: 4,
-    paddingVertical: 8,
-  },
-  timeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    textAlign: 'center',
-  },
-  gameCell: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.BORDER,
-    borderRightWidth: 1,
-    borderRightColor: COLORS.BORDER,
-    padding: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.WHITE,
-  },
-  gameCellWithContent: {
-    backgroundColor: '#f9f9f9',
-  },
-  gameContent: {
-    width: '100%',
-  },
-  gameMini: {
-    alignItems: 'center',
-    marginBottom: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  teamRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  teamLogo: {
-    width: 18,
-    height: 18,
-    borderRadius: 2,
-  },
-  teamName: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.DARK_TEXT,
-  },
-  vsText: {
-    fontSize: 9,
-    color: COLORS.LIGHT_TEXT,
-    marginVertical: 1,
-  },
-  gameTime: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    marginTop: 3,
-  },
-  networkText: {
-    fontSize: 8,
-    color: COLORS.LIGHT_TEXT,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  oddsRow: {
-    flexDirection: 'row',
-    gap: 4,
-    marginTop: 2,
-  },
-  oddsText: {
-    fontSize: 7,
-    color: COLORS.LIGHT_TEXT,
-    fontWeight: '500',
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.LIVE_RED,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3,
-  },
-  liveDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: COLORS.WHITE,
-    marginRight: 2,
-  },
-  liveText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  liveScore: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: COLORS.LIVE_RED,
-    marginLeft: 2,
-  },
-  finalBadge: {
-    backgroundColor: COLORS.LIGHT_TEXT,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 3,
-    marginTop: 3,
-  },
-  finalText: {
-    fontSize: 8,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  finalScore: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
-    marginTop: 2,
-  },
-  emptyCell: {
-    fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
-    fontWeight: '300',
-  },
-  scrollHint: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: SCROLL_HINT_HEIGHT,
-    backgroundColor: COLORS.LIGHT_BG,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER,
-    gap: 6,
-  },
-  scrollHintText: {
-    fontSize: 11,
-    color: COLORS.LIGHT_TEXT,
-    fontWeight: '500',
-  },
-  scrollHintArrow: {
-    fontSize: 10,
-    color: COLORS.LIGHT_TEXT,
-  },
-});
+const createStyles = (theme: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.surface,
+      marginHorizontal: 8,
+      marginBottom: 16,
+      borderRadius: 12,
+      overflow: 'hidden',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    row: {
+      flexDirection: 'row',
+    },
+    timeColumnHeader: {
+      width: 50,
+    },
+    headerCell: {
+      backgroundColor: theme.primary,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      borderRightWidth: 1,
+      borderRightColor: theme.border,
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: HEADER_HEIGHT,
+      paddingHorizontal: 8,
+    },
+    sportHeaderText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: theme.textInverse,
+      textAlign: 'center',
+    },
+    timeCell: {
+      width: 50,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      borderRightWidth: 1,
+      borderRightColor: theme.border,
+      backgroundColor: theme.background,
+      paddingHorizontal: 4,
+      paddingVertical: 8,
+    },
+    timeText: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.text,
+      textAlign: 'center',
+    },
+    gameCell: {
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      borderRightWidth: 1,
+      borderRightColor: theme.border,
+      padding: 4,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.surface,
+    },
+    gameCellWithContent: {
+      backgroundColor: theme.surfaceAlt,
+    },
+    gameContent: {
+      width: '100%',
+    },
+    gameMini: {
+      alignItems: 'center',
+      marginBottom: 4,
+      paddingHorizontal: 4,
+      paddingVertical: 4,
+      backgroundColor: theme.surface,
+      borderRadius: 4,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    teamRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 3,
+    },
+    teamLogo: {
+      width: 18,
+      height: 18,
+      borderRadius: 2,
+    },
+    teamName: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: theme.text,
+    },
+    vsText: {
+      fontSize: 9,
+      color: theme.textSecondary,
+      marginVertical: 1,
+    },
+    gameTime: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: theme.text,
+      marginTop: 3,
+    },
+    networkText: {
+      fontSize: 8,
+      color: theme.textSecondary,
+      fontWeight: '500',
+      marginTop: 2,
+    },
+    oddsRow: {
+      flexDirection: 'row',
+      gap: 4,
+      marginTop: 2,
+    },
+    oddsText: {
+      fontSize: 7,
+      color: theme.textSecondary,
+      fontWeight: '500',
+    },
+    liveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.live,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+      borderRadius: 3,
+    },
+    liveDot: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: theme.textInverse,
+      marginRight: 2,
+    },
+    liveText: {
+      fontSize: 8,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    liveScore: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.live,
+      marginLeft: 2,
+    },
+    finalBadge: {
+      backgroundColor: theme.textSecondary,
+      paddingHorizontal: 4,
+      paddingVertical: 1,
+      borderRadius: 3,
+      marginTop: 3,
+    },
+    finalText: {
+      fontSize: 8,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    finalScore: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginTop: 2,
+    },
+    emptyCell: {
+      fontSize: 12,
+      color: theme.textSecondary,
+      fontWeight: '300',
+    },
+    scrollHint: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      height: SCROLL_HINT_HEIGHT,
+      backgroundColor: theme.background,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      gap: 6,
+    },
+    scrollHintText: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      fontWeight: '500',
+    },
+    scrollHintArrow: {
+      fontSize: 10,
+      color: theme.textSecondary,
+    },
+  });
 
 export default TVGuideGrid;

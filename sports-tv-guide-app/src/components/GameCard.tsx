@@ -2,11 +2,14 @@
  * Game Card - Individual game display
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { Game } from '@types/index';
-import { COLORS, NETWORK_LOGOS, SPORTS } from '@constants/index';
+import { NETWORK_LOGOS, SPORTS } from '@constants/index';
+import { ThemeColors } from '@constants/theme';
+import { useTheme, useIsDark } from '@/hooks/useTheme';
+import { useGameStore } from '@store/gameStore';
 
 interface GameCardProps {
   game: Game;
@@ -15,6 +18,12 @@ interface GameCardProps {
 }
 
 const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) => {
+  const theme = useTheme();
+  const isDark = useIsDark();
+  const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
+  const favoriteGames = useGameStore((s) => s.preferences.favoriteGames);
+  const toggleFavoriteGame = useGameStore((s) => s.toggleFavoriteGame);
+  const isFavorite = favoriteGames.includes(game.id);
   const isLive = game.status === 'in_progress';
   const isCompleted = game.status === 'completed';
 
@@ -34,6 +43,21 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
         onPress={onPress}
         activeOpacity={0.7}
       >
+        <TouchableOpacity
+          style={styles.favoriteButtonCompact}
+          onPress={(e) => {
+            e.stopPropagation();
+            toggleFavoriteGame(game.id);
+          }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.favoriteStarCompact, isFavorite && styles.favoriteStarActive]}>
+            {isFavorite ? '★' : '☆'}
+          </Text>
+        </TouchableOpacity>
+
         <View style={styles.compactContent}>
           <View style={styles.compactTeams}>
             <Text style={styles.compactTeamName}>{game.awayTeam.abbreviation}</Text>
@@ -64,6 +88,22 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
       onPress={onPress}
       activeOpacity={0.7}
     >
+      {/* Favorite Star */}
+      <TouchableOpacity
+        style={[styles.favoriteButton, isLive && styles.favoriteButtonLive]}
+        onPress={(e) => {
+          e.stopPropagation();
+          toggleFavoriteGame(game.id);
+        }}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.favoriteStar, isFavorite && styles.favoriteStarActive]}>
+          {isFavorite ? '★' : '☆'}
+        </Text>
+      </TouchableOpacity>
+
       {/* Live Indicator */}
       {isLive && (
         <View style={styles.liveIndicator}>
@@ -151,209 +191,240 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 8,
-    marginBottom: 12,
-    borderWidth: 2,
-    borderColor: COLORS.BORDER,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  containerLive: {
-    borderColor: COLORS.LIVE_RED,
-  },
-  liveIndicator: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.LIVE_RED,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  livePulse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.WHITE,
-    marginRight: 4,
-  },
-  liveText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sportBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.PRIMARY,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  sportEmoji: {
-    fontSize: 14,
-    marginRight: 4,
-  },
-  sportName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.WHITE,
-  },
-  network: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-  },
-  matchup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingVertical: 8,
-  },
-  teamSection: {
-    flex: 1,
-    alignItems: 'flex-start',
-  },
-  teamSectionRight: {
-    alignItems: 'flex-end',
-  },
-  teamName: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.DARK_TEXT,
-  },
-  record: {
-    fontSize: 11,
-    color: COLORS.LIGHT_TEXT,
-    marginTop: 2,
-  },
-  scoreSection: {
-    alignItems: 'center',
-    marginHorizontal: 12,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  score: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-  },
-  scoreLive: {
-    color: COLORS.LIVE_RED,
-  },
-  separator: {
-    fontSize: 16,
-    color: COLORS.LIGHT_TEXT,
-    marginHorizontal: 2,
-  },
-  quarter: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.LIGHT_TEXT,
-    marginTop: 2,
-  },
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER,
-    paddingTop: 8,
-    marginBottom: 8,
-  },
-  time: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-    marginBottom: 4,
-  },
-  timeLive: {
-    color: COLORS.LIVE_RED,
-  },
-  venue: {
-    fontSize: 12,
-    color: COLORS.LIGHT_TEXT,
-  },
-  notifyButton: {
-    backgroundColor: COLORS.PRIMARY,
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  notifyText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: COLORS.WHITE,
-  },
-  compactContainer: {
-    backgroundColor: COLORS.WHITE,
-    borderRadius: 8,
-    padding: 8,
-    marginHorizontal: 4,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.BORDER,
-  },
-  compactLive: {
-    borderColor: COLORS.LIVE_RED,
-    backgroundColor: '#fff3f3',
-  },
-  compactContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  compactTeams: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  compactTeamName: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.DARK_TEXT,
-  },
-  compactScore: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY,
-    marginTop: 2,
-  },
-  compactVs: {
-    fontSize: 9,
-    color: COLORS.LIGHT_TEXT,
-    marginHorizontal: 4,
-  },
-  compactLiveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-    paddingTop: 4,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.BORDER,
-    justifyContent: 'center',
-  },
-  compactLiveText: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: COLORS.LIVE_RED,
-    marginLeft: 2,
-  },
-});
+const createStyles = (theme: ThemeColors, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: theme.card,
+      borderRadius: 12,
+      padding: 16,
+      marginHorizontal: 8,
+      marginBottom: 12,
+      borderWidth: 2,
+      borderColor: theme.border,
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: isDark ? 0.3 : 0.1,
+      shadowRadius: 2,
+    },
+    containerLive: {
+      borderColor: theme.live,
+    },
+    liveIndicator: {
+      position: 'absolute',
+      top: 8,
+      right: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.live,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    livePulse: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.textInverse,
+      marginRight: 4,
+    },
+    liveText: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+    },
+    sportBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.primary,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderRadius: 6,
+    },
+    sportEmoji: {
+      fontSize: 14,
+      marginRight: 4,
+    },
+    sportName: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.textInverse,
+    },
+    network: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    matchup: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12,
+      paddingVertical: 8,
+    },
+    teamSection: {
+      flex: 1,
+      alignItems: 'flex-start',
+    },
+    teamSectionRight: {
+      alignItems: 'flex-end',
+    },
+    teamName: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    record: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    scoreSection: {
+      alignItems: 'center',
+      marginHorizontal: 12,
+    },
+    scoreRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    score: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: theme.primary,
+    },
+    scoreLive: {
+      color: theme.live,
+    },
+    separator: {
+      fontSize: 16,
+      color: theme.textSecondary,
+      marginHorizontal: 2,
+    },
+    quarter: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    footer: {
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      paddingTop: 8,
+      marginBottom: 8,
+    },
+    time: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    timeLive: {
+      color: theme.live,
+    },
+    venue: {
+      fontSize: 12,
+      color: theme.textSecondary,
+    },
+    favoriteButton: {
+      position: 'absolute',
+      top: 6,
+      right: 8,
+      zIndex: 2,
+      padding: 2,
+    },
+    favoriteButtonLive: {
+      top: 36,
+    },
+    favoriteStar: {
+      fontSize: 20,
+      lineHeight: 22,
+      color: theme.textSecondary,
+    },
+    favoriteStarActive: {
+      color: theme.secondary,
+    },
+    favoriteButtonCompact: {
+      position: 'absolute',
+      top: 2,
+      right: 4,
+      zIndex: 2,
+      padding: 2,
+    },
+    favoriteStarCompact: {
+      fontSize: 14,
+      lineHeight: 16,
+      color: theme.textSecondary,
+    },
+    notifyButton: {
+      backgroundColor: theme.primary,
+      paddingVertical: 8,
+      borderRadius: 6,
+      alignItems: 'center',
+    },
+    notifyText: {
+      fontSize: 12,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    compactContainer: {
+      backgroundColor: theme.card,
+      borderRadius: 8,
+      padding: 8,
+      marginHorizontal: 4,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    compactLive: {
+      borderColor: theme.live,
+      backgroundColor: theme.surfaceAlt,
+    },
+    compactContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    compactTeams: {
+      flex: 1,
+      alignItems: 'center',
+    },
+    compactTeamName: {
+      fontSize: 11,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    compactScore: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.primary,
+      marginTop: 2,
+    },
+    compactVs: {
+      fontSize: 9,
+      color: theme.textSecondary,
+      marginHorizontal: 4,
+    },
+    compactLiveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+      paddingTop: 4,
+      borderTopWidth: 1,
+      borderTopColor: theme.border,
+      justifyContent: 'center',
+    },
+    compactLiveText: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      color: theme.live,
+      marginLeft: 2,
+    },
+  });
 
 export default GameCard;
