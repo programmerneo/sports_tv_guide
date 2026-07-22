@@ -41,21 +41,24 @@ add/remove, wired to the store, and persisted via AsyncStorage. Remaining:
 #### Settings/Profile
 - 📋 Expand ProfileScreen (dark mode toggle already shipped)
   - [ ] Edit timezone selection
-  - [ ] Toggle notifications
+  - ✅ Toggle notifications (global on/off, shipped alongside game-start reminders)
   - [ ] View favorite teams list
   - [ ] Clear cache button
 
 **Estimated:** 2 hours
 
 #### Notifications (Reminders)
-- 📋 Implement notification system
-  - [ ] Set reminder for game
-  - [ ] Schedule local notifications
-  - [ ] Show notification alerts
-  - [ ] Manage notification history
-- 📋 Use `expo-notifications` package
-
-**Estimated:** 3-4 hours
+- ✅ Game-start reminders shipped: 🔔 button on `GameCard`/`BoxScoreModal` schedules a local
+  notification `REMINDER_LEAD_MINUTES` before tip-off, tap again to cancel, global toggle in
+  Profile. Uses `expo-notifications` on iOS/Android; web uses the browser `Notification` API +
+  `setTimeout` (foreground-only — see Known Limitations). See `src/services/notificationService.native.ts`
+  / `.web.ts`.
+- 📋 Still open:
+  - [ ] Live/close-game alerts (score-based, requires polling + diffing — no ESPN push/webhook)
+  - [ ] Daily digest notification
+  - [ ] Real notification history (`NotificationsScreen` still just lists upcoming/live games,
+        not actual sent reminders)
+  - [ ] Configurable lead time (currently a single fixed value)
 
 ### Medium Priority
 
@@ -134,8 +137,12 @@ Remaining:
    - Some games may have limited stats
 
 3. **Notifications**
-   - Currently UI only (no actual notifications)
-   - Requires `expo-notifications` setup
+   - Game-start reminders (single fixed lead time) are implemented via `expo-notifications`
+     on iOS/Android.
+   - Web reminders use the browser `Notification` API + `setTimeout` and only fire while the
+     tab stays open — there's no OS-level background scheduling for web pages, and a real
+     background/closed-tab experience would require a push server (out of scope for now).
+   - Live/close-game alerts, daily digest, and real notification history are still not built.
 
 4. **Performance**
    - Large game lists may need virtualization
@@ -202,7 +209,7 @@ Remaining:
 ### V1.0 (Next)
 - [ ] Favorites functionality
 - [ ] Search capability
-- [ ] Notification reminders
+- ✅ Notification reminders (game-start only; live alerts/digest still open)
 - [ ] Settings/profile
 - [ ] Full test coverage
 
@@ -250,10 +257,9 @@ Remaining:
 
 ## 📦 Dependencies to Consider
 
-Already installed (see `package.json`): `@react-native-async-storage/async-storage`, `react-native-reanimated`, `react-native-gesture-handler`, `expo-local-authentication`, `expo-secure-store`.
+Already installed (see `package.json`): `@react-native-async-storage/async-storage`, `react-native-reanimated`, `react-native-gesture-handler`, `expo-local-authentication`, `expo-secure-store`, `expo-notifications` (game-start reminders, iOS/Android only — web uses the browser `Notification` API instead).
 
 Still to add when their feature lands:
-- 📦 `expo-notifications` - Local/push notifications
 - 📦 `expo-linear-gradient` - Background gradients
 - 📦 `lottie-react-native` - Animations
 

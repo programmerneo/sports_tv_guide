@@ -9,7 +9,7 @@ A modern, mobile-first sports broadcast TV guide application built with **Expo**
 - 🏈 **Multi-Sport Support** - Basketball, Football, Baseball, Hockey, Soccer, and Golf
 - ⏱️ **Live Games Section** - Upcoming games at the top with countdown timers
 - 📊 **Box Score Details** - Detailed game statistics and play-by-play
-- 🔔 **Notifications** - Set reminders for favorite teams and games
+- 🔔 **Game-Start Reminders** - Tap the bell on a game to get a local notification before tip-off (toggle globally in Profile)
 - ⭐ **Favorites** - Save favorite teams and games for quick access (persisted across restarts)
 - 🌐 **Timezone-Aware** - Displays times in user's local timezone
 - 📱 **Responsive Design** - Optimized for mobile devices
@@ -231,6 +231,12 @@ You should get a JSON response with game data.
 - See team statistics and player leaders
 - Set reminders with the 🔔 button
 - Check game venue and broadcast network
+
+### Notifications
+- Tap 🔔 on a game card or in the box score to schedule a local reminder before tip-off (tap again to cancel); disabled once the game has started.
+- Turn all reminders off/on globally via the **Game Reminders** switch in Profile — switching off also cancels any pending reminders.
+- **iOS/Android**: a real OS-scheduled local notification, plays the device's default notification sound.
+- **Web**: uses the browser's `Notification` API. There's no background scheduling for web pages, so reminders only fire while the tab stays open — closing or reloading the tab cancels them.
 
 ### Navigation
 - **Home** (🏠): Main TV guide
@@ -481,6 +487,7 @@ If you see the banner **"Cannot reach API at http://localhost:3001 — is the ba
 2. Confirm the backend started on the expected port. `uv run python main.py` honors `settings.port` (default 3001); `fastapi dev main.py` without `--port 3001` will silently use 8000.
 3. If you've overridden `EXPO_PUBLIC_API_URL`, double-check it matches the backend's host and port.
 4. Check firewall settings allow connection.
+5. On web specifically, if the backend is up and reachable via `curl` but the browser still can't reach it, check the browser console for a CORS error. The backend's `allow_origin_regex` in `main.py` allows any `localhost`/`127.0.0.1`/`10.0.2.2` port, so this shouldn't happen anymore — but if it does, confirm that regex wasn't narrowed back down to a fixed port list.
 
 ### Issue: Web shows "Cannot use 'import.meta' outside a module"
 
