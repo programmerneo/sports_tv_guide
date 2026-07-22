@@ -6,6 +6,8 @@ Supports NFL, MLB, NHL, and NCAA college basketball.
 
 from __future__ import annotations
 
+from typing import Any
+
 from fastapi import APIRouter, HTTPException, Request
 from services.standings_service import StandingsService
 from utils.cache import cache_default, cached_data
@@ -25,7 +27,7 @@ _PATH_TO_SPORT: dict[str, str] = {
 @router.get("/standings/mlb/status")
 @router.get("/standings/nhl/status")
 @router.get("/standings/basketball-college/status")
-async def standings_status(request: Request):
+async def standings_status(request: Request) -> dict[str, str | bool]:
     """Whether a sport's standings are currently in season."""
     sport = request.url.path.split("/")[3]
     sport_key = _PATH_TO_SPORT.get(sport)
@@ -42,7 +44,7 @@ async def standings_status(request: Request):
 @router.get("/standings/mlb")
 @router.get("/standings/nhl")
 @router.get("/standings/basketball-college")
-async def standings(request: Request, conference: str | None = None):
+async def standings(request: Request, conference: str | None = None) -> dict[str, Any]:
     """Standings for a given sport.
 
     Args:
