@@ -44,8 +44,9 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    # Or use allow_origin_regex if you want to be very flexible in dev:
-    # allow_origin_regex=r"http://(localhost|127\.0\.0\.1|10\.0\.2\.2):.*",
+    # Covers any localhost/127.0.0.1/10.0.2.2 port so Expo picking a
+    # different dev port (8082, 19000, ...) doesn't 400 the CORS preflight.
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1|10\.0\.2\.2):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
