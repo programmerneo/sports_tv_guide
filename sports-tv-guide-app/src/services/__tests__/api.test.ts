@@ -246,8 +246,26 @@ const SAMPLE_BRACKET_RESPONSE = {
               startTime: '7:00 PM ET',
               startTimeEpoch: 1711000000,
               teams: [
-                { isHome: false, isTop: true, isWinner: true, logoUrl: '', score: 85, seed: 1, nameShort: 'Duke', nameFull: 'Duke Blue Devils' },
-                { isHome: true, isTop: false, isWinner: false, logoUrl: '', score: 78, seed: 8, nameShort: 'UNC', nameFull: 'North Carolina Tar Heels' },
+                {
+                  isHome: false,
+                  isTop: true,
+                  isWinner: true,
+                  logoUrl: '',
+                  score: 85,
+                  seed: 1,
+                  nameShort: 'Duke',
+                  nameFull: 'Duke Blue Devils',
+                },
+                {
+                  isHome: true,
+                  isTop: false,
+                  isWinner: false,
+                  logoUrl: '',
+                  score: 78,
+                  seed: 8,
+                  nameShort: 'UNC',
+                  nameFull: 'North Carolina Tar Heels',
+                },
               ],
               broadcaster: null,
             },
@@ -325,6 +343,56 @@ describe('getBrackets', () => {
     });
 
     await expect(apiService.getBrackets()).rejects.toThrow('HTTP 500');
+  });
+});
+
+describe('getStandings', () => {
+  it('returns standings from backend response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ sport: 'nhl', season: '2025-26', groups: [] }),
+      text: async () => '',
+    });
+
+    const result = await apiService.getStandings('nhl');
+
+    expect(result.season).toBe('2025-26');
+    expect(result.groups).toHaveLength(0);
+  });
+
+  it('throws on 404 when a sport is out of season (e.g. nfl/mlb postseason gating)', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 404,
+      text: async () => JSON.stringify({ detail: 'nfl season has ended' }),
+    });
+
+    await expect(apiService.getStandings('nfl')).rejects.toThrow('HTTP 404');
+  });
+});
+
+describe('getStandingsStatus', () => {
+  it('returns the inSeason flag from backend response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ sport: 'mlb', inSeason: true }),
+      text: async () => '',
+    });
+
+    const result = await apiService.getStandingsStatus('mlb');
+
+    expect(result).toBe(true);
+    expect(mockFetch.mock.calls[0][0]).toContain('/api/standings/mlb/status');
+  });
+
+  it('throws on HTTP error', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    });
+
+    await expect(apiService.getStandingsStatus('nfl')).rejects.toThrow('HTTP 500');
   });
 });
 

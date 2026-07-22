@@ -241,6 +241,12 @@ export interface BracketResponse {
 
 export type StandingsSportType = 'nfl' | 'mlb' | 'nhl' | 'basketball-college';
 
+// Navigation params accepted by the Standings tab screen — passed e.g. from
+// the Home screen's per-sport "🏆 Standings" header link to preselect a sport.
+export interface StandingsScreenParams {
+  sport?: StandingsSportType;
+}
+
 export interface StandingsTeam {
   team: string;
   shortName: string;

@@ -102,9 +102,12 @@ GET /api/standings/nfl
 GET /api/standings/mlb
 GET /api/standings/nhl
 GET /api/standings/basketball-college
+GET /api/standings/{sport}/status
 ```
 
 Standings fetched from ESPN's public API. Returns teams grouped by conference/division with records, win percentage, streak, point differential, playoff seed, and sport-specific stats.
+
+`nfl` and `mlb` are gated to their in-season window only — from that season's regular-season start through its championship (Super Bowl / World Series); outside that window `/api/standings/{nfl,mlb}` returns 404. `nhl` and `basketball-college` are never gated. The lightweight `/status` endpoint returns `{"sport": ..., "inSeason": bool}` for checking availability without fetching full standings data — used by the frontend to decide whether to show a standings link.
 
 **Cache:** 30 minutes
 

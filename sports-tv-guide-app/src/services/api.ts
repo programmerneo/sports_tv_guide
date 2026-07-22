@@ -3,7 +3,15 @@
  */
 
 import { API_BASE_URL, API_TIMEOUT, CACHE_DURATION as CacheDuration } from '@constants/index';
-import { BracketResponse, Game, GameSummary, GolfLeaderboard, SportType, StandingsResponse, StandingsSportType } from '@types/index';
+import {
+  BracketResponse,
+  Game,
+  GameSummary,
+  GolfLeaderboard,
+  SportType,
+  StandingsResponse,
+  StandingsSportType,
+} from '@types/index';
 
 interface CacheEntry<T> {
   data: T;
@@ -68,7 +76,7 @@ class ApiService {
         ...options,
         signal: controller.signal,
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'Content-Type': 'application/json',
           ...options?.headers,
         },
@@ -153,7 +161,10 @@ class ApiService {
   /**
    * Fetch golf leaderboard
    */
-  async getGolfLeaderboard(eventId: string, sport: SportType = 'golf-pga'): Promise<GolfLeaderboard> {
+  async getGolfLeaderboard(
+    eventId: string,
+    sport: SportType = 'golf-pga'
+  ): Promise<GolfLeaderboard> {
     const cacheKey = `golf-leaderboard:${eventId}`;
 
     const cached = this.getCachedData<GolfLeaderboard>(cacheKey, CacheDuration.GAME_SUMMARY);
@@ -211,6 +222,28 @@ class ApiService {
       return data;
     } catch (error) {
       console.error(`Failed to fetch ${sport} standings:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Check whether a sport's season (and, for nfl/mlb, its championship window)
+   * is currently active — a cheap status check, no standings data fetched.
+   */
+  async getStandingsStatus(sport: StandingsSportType): Promise<boolean> {
+    const cacheKey = `standings-status:${sport}`;
+
+    const cached = this.getCachedData<boolean>(cacheKey, CacheDuration.STANDINGS_STATUS);
+    if (cached !== null) return cached;
+
+    try {
+      const url = `${API_BASE_URL}/api/standings/${sport}/status`;
+      const response = await this.fetchWithTimeout(url);
+      const data: { sport: string; inSeason: boolean } = await response.json();
+      this.setCacheData(cacheKey, data.inSeason);
+      return data.inSeason;
+    } catch (error) {
+      console.error(`Failed to fetch ${sport} standings status:`, error);
       throw error;
     }
   }

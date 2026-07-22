@@ -7,7 +7,6 @@ Supports NFL, MLB, NHL, and NCAA college basketball.
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
-
 from services.standings_service import StandingsService
 from utils.cache import cache_default, cached_data
 
@@ -20,6 +19,23 @@ _PATH_TO_SPORT: dict[str, str] = {
     "nhl": "nhl",
     "basketball-college": "basketball-college",
 }
+
+
+@router.get("/standings/nfl/status")
+@router.get("/standings/mlb/status")
+@router.get("/standings/nhl/status")
+@router.get("/standings/basketball-college/status")
+async def standings_status(request: Request):
+    """Whether a sport's standings are currently in season."""
+    sport = request.url.path.split("/")[3]
+    sport_key = _PATH_TO_SPORT.get(sport)
+    if sport_key is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Unsupported sport: {sport}",
+        )
+
+    return {"sport": sport_key, "inSeason": await StandingsService.is_in_season(sport_key)}
 
 
 @router.get("/standings/nfl")
@@ -39,6 +55,12 @@ async def standings(request: Request, conference: str | None = None):
         raise HTTPException(
             status_code=404,
             detail=f"Unsupported sport: {sport}",
+        )
+
+    if not await StandingsService.is_in_season(sport_key):
+        raise HTTPException(
+            status_code=404,
+            detail=f"{sport_key} season has ended",
         )
 
     cache_key = f"standings:{sport_key}"

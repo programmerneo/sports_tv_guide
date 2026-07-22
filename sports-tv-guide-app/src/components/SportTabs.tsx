@@ -5,8 +5,8 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 
-import { SportType } from '@types/index';
-import { SPORTS } from '@constants/index';
+import { SportType, StandingsSportType } from '@types/index';
+import { SPORTS, HOME_TO_STANDINGS_SPORT } from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useGameStore } from '@store/gameStore';
@@ -26,9 +26,18 @@ interface SportTabsProps {
   selectedSport: SportType | null;
   onSelectSport: (sport: SportType | null) => void;
   onBracketPress?: () => void;
+  /** Whether each sport's "🏆 Standings" pill should be shown (in-season check). */
+  standingsAvailable?: Partial<Record<SportType, boolean>>;
+  onStandingsPress?: (sport: StandingsSportType) => void;
 }
 
-const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onBracketPress }) => {
+const SportTabs: React.FC<SportTabsProps> = ({
+  selectedSport,
+  onSelectSport,
+  onBracketPress,
+  standingsAvailable,
+  onStandingsPress,
+}) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const preferences = useGameStore((state) => state.preferences);
@@ -39,14 +48,24 @@ const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onB
     [onBracketPress]
   );
 
+  // Sports (in Home-screen key form) with an available standings pill.
+  const standingsSports = useMemo(
+    () =>
+      (Object.entries(HOME_TO_STANDINGS_SPORT) as [SportType, StandingsSportType][]).filter(
+        ([homeSport]) => standingsAvailable?.[homeSport]
+      ),
+    [standingsAvailable]
+  );
+  const hasStandingsLinks = standingsSports.length > 0;
+
   // Only show sports that have events for the day
   const sportsWithGames = preferences.selectedSports.filter((sport) => {
     const sportGames = games.get(sport);
     return sportGames && sportGames.length > 0;
   });
 
-  // If only one sport has games and no bracket, no need for tabs
-  if (sportsWithGames.length <= 1 && !showBracket) {
+  // If only one sport has games and there's no bracket or standings pill, no need for tabs
+  if (sportsWithGames.length <= 1 && !showBracket && !hasStandingsLinks) {
     return null;
   }
 
@@ -58,6 +77,18 @@ const SportTabs: React.FC<SportTabsProps> = ({ selectedSport, onSelectSport, onB
           <Text style={styles.bracketText}>Bracket</Text>
         </TouchableOpacity>
       )}
+
+      {standingsSports.map(([homeSport, shortSport]) => (
+        <TouchableOpacity
+          key={homeSport}
+          style={styles.standingsTab}
+          onPress={() => onStandingsPress?.(shortSport)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.standingsIcon}>&#x1F3C6;</Text>
+          <Text style={styles.standingsText}>{SPORTS[homeSport].displayName} Standings</Text>
+        </TouchableOpacity>
+      ))}
 
       <TouchableOpacity
         style={[styles.tab, selectedSport === null && styles.tabActive]}
@@ -130,6 +161,24 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 12,
       fontWeight: '700',
       color: '#C8991D',
+    },
+    standingsTab: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 20,
+      backgroundColor: theme.primary,
+      marginRight: 20,
+      gap: 4,
+    },
+    standingsIcon: {
+      fontSize: 12,
+    },
+    standingsText: {
+      fontSize: 12,
+      fontWeight: '700',
+      color: theme.textInverse,
     },
     tab: {
       paddingHorizontal: 12,

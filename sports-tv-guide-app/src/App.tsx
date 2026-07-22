@@ -18,9 +18,20 @@ import ProfileScreen from '@screens/ProfileScreen';
 
 import { useGameStore } from '@store/gameStore';
 import { useTheme } from '@/hooks/useTheme';
+import { StandingsScreenParams } from '@types/index';
+
+// Bottom tab param list — only screens that accept navigation params need an
+// entry here (the rest default to `undefined`).
+export type RootTabParamList = {
+  Home: undefined;
+  Standings: StandingsScreenParams;
+  Favorites: undefined;
+  Notifications: undefined;
+  Profile: undefined;
+};
 
 const Stack = createNativeStackNavigator();
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<RootTabParamList>();
 
 /**
  * Home Stack Navigator

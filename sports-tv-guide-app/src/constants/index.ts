@@ -3,7 +3,7 @@
  */
 
 import { Platform } from 'react-native';
-import { SportType } from '@types/index';
+import { SportType, StandingsSportType } from '@types/index';
 
 const getApiBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
@@ -28,6 +28,13 @@ export const SPORTS: Record<SportType, { label: string; emoji: string; displayNa
   'golf-liv': { label: '⛳', emoji: '⛳', displayName: 'LIV Golf' },
   'hockey-nhl': { label: '🏒', emoji: '🏒', displayName: 'NHL' },
   'baseball-mlb': { label: '⚾', emoji: '⚾', displayName: 'MLB' },
+};
+
+// Maps the Home screen's TV guide grid sport keys to the short keys the
+// Standings screen/API use, for sports that have a "🏆 Standings" header link.
+export const HOME_TO_STANDINGS_SPORT: Partial<Record<SportType, StandingsSportType>> = {
+  'baseball-mlb': 'mlb',
+  'football-nfl': 'nfl',
 };
 
 export const NETWORK_LOGOS: Record<string, string> = {
@@ -55,6 +62,7 @@ export const CACHE_DURATION = {
   SCHEDULE: 30 * 1000,
   GAME_SUMMARY: 60 * 1000,
   STANDINGS: 5 * 60 * 1000,
+  STANDINGS_STATUS: 5 * 60 * 1000,
   PREFERENCES: 24 * 60 * 60 * 1000,
 };
 
@@ -117,11 +125,40 @@ export const DEFAULT_USER_PREFERENCES = {
 };
 
 export const TIME_SLOTS = [
-  '7:00 AM', '7:30 AM', '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM',
-  '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
-  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM', '6:00 PM', '6:30 PM',
-  '7:00 PM', '7:30 PM', '8:00 PM', '8:30 PM', '9:00 PM', '9:30 PM', '10:00 PM', '10:30 PM',
-  '11:00 PM', '11:30 PM',
+  '7:00 AM',
+  '7:30 AM',
+  '8:00 AM',
+  '8:30 AM',
+  '9:00 AM',
+  '9:30 AM',
+  '10:00 AM',
+  '10:30 AM',
+  '11:00 AM',
+  '11:30 AM',
+  '12:00 PM',
+  '12:30 PM',
+  '1:00 PM',
+  '1:30 PM',
+  '2:00 PM',
+  '2:30 PM',
+  '3:00 PM',
+  '3:30 PM',
+  '4:00 PM',
+  '4:30 PM',
+  '5:00 PM',
+  '5:30 PM',
+  '6:00 PM',
+  '6:30 PM',
+  '7:00 PM',
+  '7:30 PM',
+  '8:00 PM',
+  '8:30 PM',
+  '9:00 PM',
+  '9:30 PM',
+  '10:00 PM',
+  '10:30 PM',
+  '11:00 PM',
+  '11:30 PM',
 ];
 
 export const GAME_REFRESH_INTERVAL = 30 * 1000;

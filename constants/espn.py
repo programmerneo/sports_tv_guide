@@ -103,6 +103,41 @@ CONFERENCE_SHORT_NAMES: dict[str, str] = {
     "62": "American",
 }
 
+# ── Postseason (core API) sport/league paths ─────────────────────────────────
+# Used to build ESPN core API URLs for looking up a season's regular-season
+# and postseason windows, e.g. to gate standings before the season starts and
+# after the championship has ended. Only NFL and MLB are gated; other sports
+# don't have a season-ending cutoff.
+POSTSEASON_SPORT_PATHS: dict[str, str] = {
+    "nfl": "football/nfl",
+    "mlb": "baseball/mlb",
+}
+
+ESPN_CORE_API = "https://sports.core.api.espn.com/v2/sports"
+
+
+def season_url(sport: str, year: int) -> str:
+    """Build the ESPN core API URL for a sport's season resource.
+
+    The season resource's ``types.items`` array carries the start/end dates
+    for every season phase (preseason, regular season, postseason, off
+    season), letting one fetch answer both "has the season started" and
+    "has the championship ended".
+
+    Args:
+        sport: Short sport key (``'nfl'`` or ``'mlb'``).
+        year: Season year (the year the season started).
+
+    Returns:
+        The ESPN core API URL, or an empty string if *sport* isn't gated.
+    """
+    league_path = POSTSEASON_SPORT_PATHS.get(sport)
+    if league_path is None:
+        return ""
+    sport_name, league = league_path.split("/", 1)
+    return f"{ESPN_CORE_API}/{sport_name}/leagues/{league}/seasons/{year}?lang=en&region=us"
+
+
 # ── Sport slug mapping ────────────────────────────────────────────────────────
 # Maps this API's sport keys to ESPN's {sport}/{league} path segments.
 ESPN_SPORT_SLUGS: dict[str, str] = {
@@ -125,11 +160,8 @@ SCOREBOARD_GROUPS: dict[str, int] = {
 
 # ── Scoreboard endpoints ─────────────────────────────────────────────────────
 SCOREBOARD_URLS: dict[str, str] = {
-    sport: f"{ESPN_SITE_API}/{slug}/scoreboard"
-    for sport, slug in ESPN_SPORT_SLUGS.items()
+    sport: f"{ESPN_SITE_API}/{slug}/scoreboard" for sport, slug in ESPN_SPORT_SLUGS.items()
 }
 
 # ── Game summary endpoints ───────────────────────────────────────────────────
-SUMMARY_URLS: dict[str, str] = {
-    sport: f"{ESPN_SITE_API}/{slug}/summary" for sport, slug in ESPN_SPORT_SLUGS.items()
-}
+SUMMARY_URLS: dict[str, str] = {sport: f"{ESPN_SITE_API}/{slug}/summary" for sport, slug in ESPN_SPORT_SLUGS.items()}

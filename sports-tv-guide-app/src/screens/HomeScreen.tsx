@@ -18,10 +18,15 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import { apiService } from '@services/api';
 import { useGameStore, getAllGames, getLiveGames } from '@store/gameStore';
-import { SPORTS, GAME_REFRESH_INTERVAL, EMPTY_STATE_MESSAGES } from '@constants/index';
+import {
+  SPORTS,
+  GAME_REFRESH_INTERVAL,
+  EMPTY_STATE_MESSAGES,
+  HOME_TO_STANDINGS_SPORT,
+} from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
-import { Game, SportType } from '@types/index';
+import { Game, SportType, StandingsSportType } from '@types/index';
 
 import InProgressTodaySection from '@components/InProgressTodaySection';
 import SportTabs from '@components/SportTabs';
@@ -57,7 +62,7 @@ const filterGamesByQuery = (games: Game[], query: string): Game[] => {
 const HomeScreen: React.FC = () => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const navigation = useNavigation<{ navigate: (screen: string) => void }>();
+  const navigation = useNavigation<{ navigate: (screen: string, params?: object) => void }>();
   const {
     games,
     setGames,
@@ -74,6 +79,9 @@ const HomeScreen: React.FC = () => {
   const [filteredSport, setFilteredSport] = useState<SportType | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [standingsAvailable, setStandingsAvailable] = useState<Partial<Record<SportType, boolean>>>(
+    {}
+  );
 
   // Reset filter if the selected sport has no games
   useEffect(() => {
@@ -121,11 +129,31 @@ const HomeScreen: React.FC = () => {
   );
 
   /**
+   * Check which sports with a "🏆 Standings" header link (MLB/NFL) are
+   * currently in season, so the link only shows up when it'd be useful.
+   */
+  const loadStandingsAvailability = useCallback(async () => {
+    const entries = Object.entries(HOME_TO_STANDINGS_SPORT) as [SportType, StandingsSportType][];
+    const results = await Promise.allSettled(
+      entries.map(([, standingsSport]) => apiService.getStandingsStatus(standingsSport))
+    );
+
+    const availability: Partial<Record<SportType, boolean>> = {};
+    results.forEach((result, i) => {
+      const [homeSport] = entries[i];
+      availability[homeSport] = result.status === 'fulfilled' ? result.value : false;
+    });
+
+    setStandingsAvailable(availability);
+  }, []);
+
+  /**
    * Load games on screen focus
    */
   useFocusEffect(
     useCallback(() => {
       loadGames();
+      loadStandingsAvailability();
 
       // Set up auto-refresh for live games
       const refreshInterval = setInterval(() => {
@@ -133,7 +161,7 @@ const HomeScreen: React.FC = () => {
       }, GAME_REFRESH_INTERVAL);
 
       return () => clearInterval(refreshInterval);
-    }, [loadGames])
+    }, [loadGames, loadStandingsAvailability])
   );
 
   /**
@@ -239,6 +267,8 @@ const HomeScreen: React.FC = () => {
             selectedSport={filteredSport}
             onSelectSport={setFilteredSport}
             onBracketPress={() => navigation.navigate('Bracket')}
+            standingsAvailable={standingsAvailable}
+            onStandingsPress={(sport) => navigation.navigate('Standings', { sport })}
           />
         )}
 
@@ -287,9 +317,7 @@ const HomeScreen: React.FC = () => {
             activeOpacity={0.7}
             accessibilityLabel="Toggle theme"
           >
-            <Text style={styles.headerButtonIcon}>
-              {preferences.darkModeEnabled ? '☀️' : '🌙'}
-            </Text>
+            <Text style={styles.headerButtonIcon}>{preferences.darkModeEnabled ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
         </View>
       </View>

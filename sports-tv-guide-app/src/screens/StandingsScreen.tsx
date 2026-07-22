@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -9,14 +9,22 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { apiService } from '@services/api';
-import { StandingsGroup, StandingsResponse, StandingsSportType } from '@types/index';
+import {
+  StandingsGroup,
+  StandingsResponse,
+  StandingsScreenParams,
+  StandingsSportType,
+} from '@types/index';
+import { RouteProp } from '@react-navigation/native';
 
 // ── Static config ─────────────────────────────────────────────────────────────
+
+type StandingsScreenRouteProp = RouteProp<{ Standings: StandingsScreenParams }, 'Standings'>;
 
 const STANDINGS_SPORTS: StandingsSportType[] = ['nhl', 'mlb', 'nfl', 'basketball-college'];
 
@@ -145,7 +153,15 @@ export default function StandingsScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation = useNavigation();
-  const [allStandings, setAllStandings] = useState<Partial<Record<StandingsSportType, StandingsResponse>>>({});
+  const route = useRoute<StandingsScreenRouteProp>();
+  // The requested sport param should only steer sport selection on the arrival
+  // that carried it — React Navigation keeps params around across re-focuses of
+  // the same screen instance, so a stale value must not keep overriding later
+  // manual tab taps. Track whether it's already been applied once.
+  const requestedSportConsumed = useRef(false);
+  const [allStandings, setAllStandings] = useState<
+    Partial<Record<StandingsSportType, StandingsResponse>>
+  >({});
   const [activeSports, setActiveSports] = useState<StandingsSportType[]>([]);
   const [selectedSport, setSelectedSport] = useState<StandingsSportType | null>(null);
   const [selectedLeague, setSelectedLeague] = useState<string | null>(null);
@@ -171,8 +187,17 @@ export default function StandingsScreen() {
     setAllStandings(standings);
     setActiveSports(active);
 
+    const requestedSport = route.params?.sport;
+    const shouldApplyRequestedSport =
+      !requestedSportConsumed.current && requestedSport && active.includes(requestedSport);
+    requestedSportConsumed.current = true;
+
     setSelectedSport((prev) => {
-      const next = prev && active.includes(prev) ? prev : active[0] ?? null;
+      const next = shouldApplyRequestedSport
+        ? requestedSport
+        : prev && active.includes(prev)
+          ? prev
+          : (active[0] ?? null);
       if (next) {
         const firstLeague = getFirstLeagueKey(standings[next]?.groups ?? [], next);
         setSelectedLeague(firstLeague);
@@ -181,7 +206,7 @@ export default function StandingsScreen() {
     });
 
     setLoading(false);
-  }, []);
+  }, [route.params?.sport]);
 
   useFocusEffect(
     useCallback(() => {
@@ -238,13 +263,15 @@ export default function StandingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home' as never)} activeOpacity={0.7}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Home' as never)}
+          activeOpacity={0.7}
+        >
           <Text style={styles.backButtonText}>← Home</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Standings</Text>
-        {currentStandings && (
-          <Text style={styles.headerSeason}>{currentStandings.season}</Text>
-        )}
+        {currentStandings && <Text style={styles.headerSeason}>{currentStandings.season}</Text>}
       </View>
 
       {/* Sport tabs */}
@@ -400,7 +427,11 @@ function Header() {
   const navigation = useNavigation();
   return (
     <View style={styles.header}>
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('Home' as never)} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => navigation.navigate('Home' as never)}
+        activeOpacity={0.7}
+      >
         <Text style={styles.backButtonText}>← Home</Text>
       </TouchableOpacity>
       <Text style={styles.headerTitle}>Standings</Text>
