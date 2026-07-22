@@ -2,7 +2,13 @@
  * Tests for Zustand game store
  */
 
-import { useGameStore, getAllGames, getLiveGames, getUpcomingGames, getGamesBySport } from '../gameStore';
+import {
+  useGameStore,
+  getAllGames,
+  getLiveGames,
+  getUpcomingGames,
+  getGamesBySport,
+} from '../gameStore';
 import { Game, SportType } from '@types/index';
 
 // Sample game fixtures matching backend response shape
@@ -83,6 +89,7 @@ beforeEach(() => {
       darkModeEnabled: false,
       selectedSports: ['football-nfl', 'basketball-college'],
     },
+    scheduledReminders: {},
   });
 });
 
@@ -157,7 +164,11 @@ describe('getAllGames', () => {
 describe('getLiveGames', () => {
   it('returns only in_progress games', () => {
     const { setGames } = useGameStore.getState();
-    setGames('basketball-college', [SAMPLE_SCHEDULED_GAME, SAMPLE_LIVE_GAME, SAMPLE_COMPLETED_GAME]);
+    setGames('basketball-college', [
+      SAMPLE_SCHEDULED_GAME,
+      SAMPLE_LIVE_GAME,
+      SAMPLE_COMPLETED_GAME,
+    ]);
 
     const live = getLiveGames(useGameStore.getState());
     expect(live).toHaveLength(1);
@@ -176,7 +187,11 @@ describe('getLiveGames', () => {
 describe('getUpcomingGames', () => {
   it('returns only scheduled games', () => {
     const { setGames } = useGameStore.getState();
-    setGames('basketball-college', [SAMPLE_SCHEDULED_GAME, SAMPLE_LIVE_GAME, SAMPLE_COMPLETED_GAME]);
+    setGames('basketball-college', [
+      SAMPLE_SCHEDULED_GAME,
+      SAMPLE_LIVE_GAME,
+      SAMPLE_COMPLETED_GAME,
+    ]);
 
     const upcoming = getUpcomingGames(useGameStore.getState());
     expect(upcoming).toHaveLength(1);
@@ -243,6 +258,104 @@ describe('preferences', () => {
 
     toggleFavoriteGame('401634567');
     expect(useGameStore.getState().preferences.favoriteGames).not.toContain('401634567');
+  });
+});
+
+describe('scheduledReminders', () => {
+  it('addScheduledReminder sets the gameId -> notificationId mapping', () => {
+    const { addScheduledReminder } = useGameStore.getState();
+    addScheduledReminder('401634567', 'notification-id-1', SAMPLE_SCHEDULED_GAME.startTime);
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders['401634567'].notificationId).toBe('notification-id-1');
+  });
+
+  it('addScheduledReminder does not affect other reminders', () => {
+    const { addScheduledReminder } = useGameStore.getState();
+    addScheduledReminder('401634567', 'notification-id-1', SAMPLE_SCHEDULED_GAME.startTime);
+    addScheduledReminder('401634568', 'notification-id-2', SAMPLE_LIVE_GAME.startTime);
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders['401634567'].notificationId).toBe('notification-id-1');
+    expect(state.scheduledReminders['401634568'].notificationId).toBe('notification-id-2');
+  });
+
+  it('removeScheduledReminder deletes the mapping for a gameId', () => {
+    const { addScheduledReminder, removeScheduledReminder } = useGameStore.getState();
+    addScheduledReminder('401634567', 'notification-id-1', SAMPLE_SCHEDULED_GAME.startTime);
+
+    removeScheduledReminder('401634567');
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders['401634567']).toBeUndefined();
+  });
+
+  it('removeScheduledReminder on a nonexistent gameId does not throw', () => {
+    const { removeScheduledReminder } = useGameStore.getState();
+
+    expect(() => removeScheduledReminder('does-not-exist')).not.toThrow();
+    expect(useGameStore.getState().scheduledReminders).toEqual({});
+  });
+
+  it('setGames drops the reminder once its game is no longer scheduled/live', () => {
+    const { addScheduledReminder, setGames } = useGameStore.getState();
+    addScheduledReminder(
+      SAMPLE_SCHEDULED_GAME.id,
+      'notification-id-1',
+      SAMPLE_SCHEDULED_GAME.startTime
+    );
+
+    setGames('basketball-college', [{ ...SAMPLE_SCHEDULED_GAME, status: 'completed' }]);
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders[SAMPLE_SCHEDULED_GAME.id]).toBeUndefined();
+  });
+
+  it('setGames keeps the reminder while its game is still scheduled or live', () => {
+    const { addScheduledReminder, setGames } = useGameStore.getState();
+    addScheduledReminder(
+      SAMPLE_SCHEDULED_GAME.id,
+      'notification-id-1',
+      SAMPLE_SCHEDULED_GAME.startTime
+    );
+    addScheduledReminder(SAMPLE_LIVE_GAME.id, 'notification-id-2', SAMPLE_LIVE_GAME.startTime);
+
+    setGames('basketball-college', [SAMPLE_SCHEDULED_GAME, SAMPLE_LIVE_GAME]);
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders[SAMPLE_SCHEDULED_GAME.id].notificationId).toBe(
+      'notification-id-1'
+    );
+    expect(state.scheduledReminders[SAMPLE_LIVE_GAME.id].notificationId).toBe('notification-id-2');
+  });
+});
+
+describe('pruneExpiredReminders', () => {
+  it('removes a reminder whose startTime is in the past', () => {
+    const { addScheduledReminder, pruneExpiredReminders } = useGameStore.getState();
+    addScheduledReminder('401634567', 'notification-id-1', '2020-01-01T00:00Z');
+
+    pruneExpiredReminders();
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders['401634567']).toBeUndefined();
+  });
+
+  it('keeps a reminder whose startTime is in the future', () => {
+    const { addScheduledReminder, pruneExpiredReminders } = useGameStore.getState();
+    addScheduledReminder('401634567', 'notification-id-1', '2099-01-01T00:00Z');
+
+    pruneExpiredReminders();
+
+    const state = useGameStore.getState();
+    expect(state.scheduledReminders['401634567'].notificationId).toBe('notification-id-1');
+  });
+
+  it('does not throw when there are no reminders', () => {
+    const { pruneExpiredReminders } = useGameStore.getState();
+
+    expect(() => pruneExpiredReminders()).not.toThrow();
+    expect(useGameStore.getState().scheduledReminders).toEqual({});
   });
 });
 

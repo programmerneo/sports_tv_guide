@@ -1,15 +1,18 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 import { useGameStore, getUpcomingGames, getLiveGames } from '@store/gameStore';
 import { Game } from '@types/index';
 import { SPORTS } from '@constants/index';
 import { useTheme } from '@/hooks/useTheme';
 import { ThemeColors } from '@constants/theme';
+import { cancelGameReminder } from '@services/notificationService';
 
 interface Reminder {
   id: string;
+  game: Game;
   emoji: string;
   title: string;
   subtitle: string;
@@ -29,11 +32,14 @@ const formatStartTime = (startTime: string): string => {
 export default function NotificationsScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const navigation = useNavigation();
 
   const games = useGameStore((state) => state.games);
   const favoriteGames = useGameStore((state) => state.preferences.favoriteGames);
   const favoriteTeams = useGameStore((state) => state.preferences.favoriteTeams);
   const selectedSports = useGameStore((state) => state.preferences.selectedSports);
+  const scheduledReminders = useGameStore((state) => state.scheduledReminders);
+  const removeScheduledReminder = useGameStore((state) => state.removeScheduledReminder);
 
   const reminders = useMemo<Reminder[]>(() => {
     const state = useGameStore.getState();
@@ -55,6 +61,7 @@ export default function NotificationsScreen() {
 
       return {
         id: game.id,
+        game,
         emoji,
         title,
         subtitle,
@@ -63,12 +70,23 @@ export default function NotificationsScreen() {
       };
     };
 
-    const reminderGames = [...live, ...upcoming];
-    const built = reminderGames.map(toReminder);
+    // Only games with an active reminder actually belong on this page.
+    const activeReminderGames = [...live, ...upcoming].filter((game) =>
+      Boolean(scheduledReminders[game.id])
+    );
+    const built = activeReminderGames.map(toReminder);
 
     // Prioritize favorites at the top while keeping relative order otherwise.
     return [...built].sort((a, b) => Number(b.isFavorite) - Number(a.isFavorite));
-  }, [games, favoriteGames, favoriteTeams, selectedSports]);
+  }, [games, favoriteGames, favoriteTeams, selectedSports, scheduledReminders]);
+
+  const handleCancelReminder = async (item: Reminder) => {
+    const reminder = scheduledReminders[item.game.id];
+    if (!reminder) return;
+
+    await cancelGameReminder(reminder.notificationId);
+    removeScheduledReminder(item.game.id);
+  };
 
   const renderReminder = ({ item }: { item: Reminder }) => (
     <View style={styles.row}>
@@ -86,12 +104,29 @@ export default function NotificationsScreen() {
           <Text style={styles.favoriteBadgeText}>★ Favorite</Text>
         </View>
       )}
+      <TouchableOpacity
+        onPress={() => handleCancelReminder(item)}
+        style={styles.reminderButton}
+        accessibilityLabel="Cancel reminder"
+        accessibilityRole="button"
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles.reminderIcon}>🔔</Text>
+      </TouchableOpacity>
     </View>
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Home' as never)}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.backButtonText}>← Home</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
       </View>
 
@@ -106,7 +141,9 @@ export default function NotificationsScreen() {
       ) : (
         <View style={styles.emptyState}>
           <Text style={styles.emptyEmoji}>🔔</Text>
-          <Text style={styles.emptyText}>No upcoming games to remind you about.</Text>
+          <Text style={styles.emptyText}>
+            No active reminders. Tap the 🔕 on a game to set one.
+          </Text>
         </View>
       )}
     </SafeAreaView>
@@ -125,6 +162,15 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.headerBg,
       paddingHorizontal: 16,
       paddingVertical: 12,
+      gap: 12,
+    },
+    backButton: {
+      padding: 4,
+    },
+    backButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textInverse,
     },
     headerTitle: {
       fontSize: 20,
@@ -169,6 +215,13 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 11,
       fontWeight: '700',
       color: theme.secondary,
+    },
+    reminderButton: {
+      padding: 8,
+      marginLeft: 4,
+    },
+    reminderIcon: {
+      fontSize: 20,
     },
     separator: {
       height: 1,

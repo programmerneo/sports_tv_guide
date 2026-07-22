@@ -162,3 +162,6 @@ export const TIME_SLOTS = [
 ];
 
 export const GAME_REFRESH_INTERVAL = 30 * 1000;
+
+// How long before a game's start time to fire a game-start reminder notification.
+export const REMINDER_LEAD_MINUTES = 15;

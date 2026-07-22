@@ -3,13 +3,18 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Text, TouchableOpacity, Alert } from 'react-native';
 
 import { Game } from '@types/index';
-import { NETWORK_LOGOS, SPORTS } from '@constants/index';
+import { NETWORK_LOGOS, REMINDER_LEAD_MINUTES, SPORTS } from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme, useIsDark } from '@/hooks/useTheme';
 import { useGameStore } from '@store/gameStore';
+import {
+  cancelGameReminder,
+  requestNotificationPermissions,
+  scheduleGameReminder,
+} from '@services/notificationService';
 
 interface GameCardProps {
   game: Game;
@@ -23,9 +28,41 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
   const styles = useMemo(() => createStyles(theme, isDark), [theme, isDark]);
   const favoriteGames = useGameStore((s) => s.preferences.favoriteGames);
   const toggleFavoriteGame = useGameStore((s) => s.toggleFavoriteGame);
+  const notificationsEnabled = useGameStore((s) => s.preferences.notificationsEnabled);
+  const scheduledReminders = useGameStore((s) => s.scheduledReminders);
+  const addScheduledReminder = useGameStore((s) => s.addScheduledReminder);
+  const removeScheduledReminder = useGameStore((s) => s.removeScheduledReminder);
   const isFavorite = favoriteGames.includes(game.id);
   const isLive = game.status === 'in_progress';
   const isCompleted = game.status === 'completed';
+  const reminder = scheduledReminders[game.id];
+  const hasReminder = Boolean(reminder);
+  const isNotifyDisabled = !notificationsEnabled || game.status !== 'scheduled';
+
+  const handleNotifyPress = async (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+    if (isNotifyDisabled) return;
+
+    if (hasReminder) {
+      await cancelGameReminder(reminder.notificationId);
+      removeScheduledReminder(game.id);
+      return;
+    }
+
+    const granted = await requestNotificationPermissions();
+    if (!granted) {
+      Alert.alert(
+        'Notifications disabled',
+        'Enable notifications in your device settings to get game reminders.'
+      );
+      return;
+    }
+
+    const notificationId = await scheduleGameReminder(game, REMINDER_LEAD_MINUTES);
+    if (notificationId) {
+      addScheduledReminder(game.id, notificationId, game.startTime);
+    }
+  };
 
   const formatTime = (dateString: string): string => {
     const date = new Date(dateString);
@@ -73,9 +110,7 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
         {isLive && (
           <View style={styles.compactLiveBadge}>
             <View style={styles.livePulse} />
-            <Text style={styles.compactLiveText}>
-              {game.statusDetail || 'LIVE'}
-            </Text>
+            <Text style={styles.compactLiveText}>{game.statusDetail || 'LIVE'}</Text>
           </View>
         )}
       </TouchableOpacity>
@@ -132,7 +167,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
           {game.awayTeam.record && (
             <Text style={styles.record}>
               {game.awayTeam.record}
-              {game.awayTeam.conferenceRecord && `, ${game.awayTeam.conferenceRecord} ${game.awayTeam.conference || ''}`}
+              {game.awayTeam.conferenceRecord &&
+                `, ${game.awayTeam.conferenceRecord} ${game.awayTeam.conference || ''}`}
             </Text>
           )}
         </View>
@@ -154,7 +190,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
           {game.homeTeam.record && (
             <Text style={styles.record}>
               {game.homeTeam.record}
-              {game.homeTeam.conferenceRecord && `, ${game.homeTeam.conferenceRecord} ${game.homeTeam.conference || ''}`}
+              {game.homeTeam.conferenceRecord &&
+                `, ${game.homeTeam.conferenceRecord} ${game.homeTeam.conference || ''}`}
             </Text>
           )}
         </View>
@@ -179,13 +216,14 @@ const GameCard: React.FC<GameCardProps> = ({ game, onPress, compact = false }) =
 
       {/* Notify Button */}
       <TouchableOpacity
-        style={styles.notifyButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          // Handle notification
-        }}
+        style={[styles.notifyButton, isNotifyDisabled && styles.notifyButtonDisabled]}
+        onPress={handleNotifyPress}
+        accessibilityLabel={hasReminder ? 'Cancel reminder' : 'Set reminder'}
+        accessibilityRole="button"
       >
-        <Text style={styles.notifyText}>🔔 Notify</Text>
+        <Text style={[styles.notifyText, isNotifyDisabled && styles.notifyTextDisabled]}>
+          {hasReminder ? '🔔 Reminder Set' : '🔕 Notify'}
+        </Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -367,10 +405,16 @@ const createStyles = (theme: ThemeColors, isDark: boolean) =>
       borderRadius: 6,
       alignItems: 'center',
     },
+    notifyButtonDisabled: {
+      backgroundColor: theme.border,
+    },
     notifyText: {
       fontSize: 12,
       fontWeight: 'bold',
       color: theme.textInverse,
+    },
+    notifyTextDisabled: {
+      color: theme.textSecondary,
     },
     compactContainer: {
       backgroundColor: theme.card,

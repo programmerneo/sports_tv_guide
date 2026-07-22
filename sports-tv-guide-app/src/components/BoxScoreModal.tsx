@@ -13,15 +13,21 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Game, GameSummary, GolfLeaderboard, GolfLeaderboardEntry } from '@types/index';
-import { SPORTS, GAME_REFRESH_INTERVAL } from '@constants/index';
+import { SPORTS, GAME_REFRESH_INTERVAL, REMINDER_LEAD_MINUTES } from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { useGameStore } from '@store/gameStore';
 import { apiService } from '@services/api';
+import {
+  cancelGameReminder,
+  requestNotificationPermissions,
+  scheduleGameReminder,
+} from '@services/notificationService';
 
 interface BoxScoreModalProps {
   game: Game;
@@ -90,7 +96,38 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
 
   const favoriteGames = useGameStore((s) => s.preferences.favoriteGames);
   const toggleFavoriteGame = useGameStore((s) => s.toggleFavoriteGame);
+  const notificationsEnabled = useGameStore((s) => s.preferences.notificationsEnabled);
+  const scheduledReminders = useGameStore((s) => s.scheduledReminders);
+  const addScheduledReminder = useGameStore((s) => s.addScheduledReminder);
+  const removeScheduledReminder = useGameStore((s) => s.removeScheduledReminder);
   const isFavorite = favoriteGames.includes(game.id);
+  const reminder = scheduledReminders[game.id];
+  const hasReminder = Boolean(reminder);
+  const isNotifyDisabled = !notificationsEnabled || game.status !== 'scheduled';
+
+  const handleNotifyPress = async () => {
+    if (isNotifyDisabled) return;
+
+    if (hasReminder) {
+      await cancelGameReminder(reminder.notificationId);
+      removeScheduledReminder(game.id);
+      return;
+    }
+
+    const granted = await requestNotificationPermissions();
+    if (!granted) {
+      Alert.alert(
+        'Notifications disabled',
+        'Enable notifications in your device settings to get game reminders.'
+      );
+      return;
+    }
+
+    const notificationId = await scheduleGameReminder(game, REMINDER_LEAD_MINUTES);
+    if (notificationId) {
+      addScheduledReminder(game.id, notificationId, game.startTime);
+    }
+  };
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -254,16 +291,36 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
             <View>
               {/* Leaderboard Header */}
               <View style={styles.leaderboardHeaderRow}>
-                <Text style={[styles.leaderboardHeaderText, styles.lbPos]} numberOfLines={1}>POS</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbName]} numberOfLines={1}>PLAYER</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbScore]} numberOfLines={1}>SCORE</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbToday]} numberOfLines={1}>TODAY</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbThru]} numberOfLines={1}>THRU</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R1</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R2</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R3</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>R4</Text>
-                <Text style={[styles.leaderboardHeaderText, styles.lbTotal]} numberOfLines={1}>TOT</Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbPos]} numberOfLines={1}>
+                  POS
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbName]} numberOfLines={1}>
+                  PLAYER
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbScore]} numberOfLines={1}>
+                  SCORE
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbToday]} numberOfLines={1}>
+                  TODAY
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbThru]} numberOfLines={1}>
+                  THRU
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>
+                  R1
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>
+                  R2
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>
+                  R3
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbRound]} numberOfLines={1}>
+                  R4
+                </Text>
+                <Text style={[styles.leaderboardHeaderText, styles.lbTotal]} numberOfLines={1}>
+                  TOT
+                </Text>
               </View>
 
               {/* Leaderboard Rows */}
@@ -303,10 +360,18 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
                   <Text style={[styles.leaderboardCell, styles.lbThru]}>
                     {entry.teeTime ? formatTime(entry.teeTime) : entry.thru || '-'}
                   </Text>
-                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[0] || '--'}</Text>
-                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[1] || '--'}</Text>
-                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[2] || '--'}</Text>
-                  <Text style={[styles.leaderboardCell, styles.lbRound]}>{entry.rounds[3] || '--'}</Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>
+                    {entry.rounds[0] || '--'}
+                  </Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>
+                    {entry.rounds[1] || '--'}
+                  </Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>
+                    {entry.rounds[2] || '--'}
+                  </Text>
+                  <Text style={[styles.leaderboardCell, styles.lbRound]}>
+                    {entry.rounds[3] || '--'}
+                  </Text>
                   <Text style={[styles.leaderboardCell, styles.lbTotal]}>
                     {entry.totalStrokes != null ? entry.totalStrokes : '--'}
                   </Text>
@@ -408,7 +473,8 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
       </View>
 
       {/* Starting Pitchers (baseball only) */}
-      {game.sport === 'baseball-mlb' && gameSummary.startingPitchers &&
+      {game.sport === 'baseball-mlb' &&
+        gameSummary.startingPitchers &&
         (gameSummary.startingPitchers.away || gameSummary.startingPitchers.home) && (
           <View style={styles.pitchersSection}>
             <Text style={styles.predictorTitle}>Starting Pitchers</Text>
@@ -423,17 +489,22 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
                     />
                   )}
                   <Text style={styles.pitcherName} numberOfLines={1}>
-                    {gameSummary.startingPitchers.away.shortName || gameSummary.startingPitchers.away.name}
+                    {gameSummary.startingPitchers.away.shortName ||
+                      gameSummary.startingPitchers.away.name}
                   </Text>
                   {gameSummary.startingPitchers.away.jersey && (
-                    <Text style={styles.pitcherJersey}>#{gameSummary.startingPitchers.away.jersey}</Text>
+                    <Text style={styles.pitcherJersey}>
+                      #{gameSummary.startingPitchers.away.jersey}
+                    </Text>
                   )}
                   <View style={styles.pitcherStats}>
-                    {gameSummary.startingPitchers.away.statistics.map((stat: { label: string; displayValue: string }) => (
-                      <Text key={stat.label} style={styles.pitcherStatText}>
-                        {stat.label}: {stat.displayValue}
-                      </Text>
-                    ))}
+                    {gameSummary.startingPitchers.away.statistics.map(
+                      (stat: { label: string; displayValue: string }) => (
+                        <Text key={stat.label} style={styles.pitcherStatText}>
+                          {stat.label}: {stat.displayValue}
+                        </Text>
+                      )
+                    )}
                   </View>
                 </View>
               ) : (
@@ -454,17 +525,22 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
                     />
                   )}
                   <Text style={styles.pitcherName} numberOfLines={1}>
-                    {gameSummary.startingPitchers.home.shortName || gameSummary.startingPitchers.home.name}
+                    {gameSummary.startingPitchers.home.shortName ||
+                      gameSummary.startingPitchers.home.name}
                   </Text>
                   {gameSummary.startingPitchers.home.jersey && (
-                    <Text style={styles.pitcherJersey}>#{gameSummary.startingPitchers.home.jersey}</Text>
+                    <Text style={styles.pitcherJersey}>
+                      #{gameSummary.startingPitchers.home.jersey}
+                    </Text>
                   )}
                   <View style={styles.pitcherStats}>
-                    {gameSummary.startingPitchers.home.statistics.map((stat: { label: string; displayValue: string }) => (
-                      <Text key={stat.label} style={styles.pitcherStatText}>
-                        {stat.label}: {stat.displayValue}
-                      </Text>
-                    ))}
+                    {gameSummary.startingPitchers.home.statistics.map(
+                      (stat: { label: string; displayValue: string }) => (
+                        <Text key={stat.label} style={styles.pitcherStatText}>
+                          {stat.label}: {stat.displayValue}
+                        </Text>
+                      )
+                    )}
                   </View>
                 </View>
               ) : (
@@ -647,25 +723,34 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
           <Text style={styles.headerTitle}>
             {isGolf ? 'Tournament Leaderboard' : 'Game Details'}
           </Text>
-          <TouchableOpacity
-            onPress={() => toggleFavoriteGame(game.id)}
-            style={styles.favoriteButton}
-            accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text style={[styles.favoriteStar, isFavorite && styles.favoriteStarActive]}>
-              {isFavorite ? '★' : '☆'}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              onPress={handleNotifyPress}
+              style={styles.notifyIconButton}
+              disabled={isNotifyDisabled}
+              accessibilityLabel={hasReminder ? 'Cancel reminder' : 'Set reminder'}
+              accessibilityRole="button"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.notifyIcon, isNotifyDisabled && styles.notifyIconDisabled]}>
+                {hasReminder ? '🔔' : '🔕'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => toggleFavoriteGame(game.id)}
+              style={styles.favoriteButton}
+              accessibilityLabel={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Text style={[styles.favoriteStar, isFavorite && styles.favoriteStarActive]}>
+                {isFavorite ? '★' : '☆'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
           {isGolf ? renderGolfContent() : renderGameContent()}
-
-          {/* Notify Button */}
-          <TouchableOpacity style={styles.notifyButtonLarge}>
-            <Text style={styles.notifyButtonText}>🔔 Set Reminder</Text>
-          </TouchableOpacity>
 
           <View style={styles.spacer} />
         </ScrollView>
@@ -682,517 +767,517 @@ const BoxScoreModal: React.FC<BoxScoreModalProps> = ({ game, visible, onClose })
 
 const createStyles = (theme: ThemeColors) =>
   StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.background,
-  },
-  header: {
-    backgroundColor: theme.primary,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 12,
-  },
-  closeButton: {
-    padding: 8,
-  },
-  closeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.textInverse,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: theme.textInverse,
-  },
-  headerSpacer: {
-    width: 60,
-  },
-  favoriteButton: {
-    width: 60,
-    alignItems: 'flex-end',
-    padding: 8,
-  },
-  favoriteStar: {
-    fontSize: 22,
-    color: theme.textSecondary,
-  },
-  favoriteStarActive: {
-    color: theme.secondary,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
+    container: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    header: {
+      backgroundColor: theme.primary,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      paddingBottom: 12,
+    },
+    closeButton: {
+      padding: 8,
+    },
+    closeText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textInverse,
+    },
+    headerTitle: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    headerSpacer: {
+      width: 60,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    favoriteButton: {
+      padding: 8,
+    },
+    favoriteStar: {
+      fontSize: 22,
+      color: theme.textSecondary,
+    },
+    favoriteStarActive: {
+      color: theme.secondary,
+    },
+    notifyIconButton: {
+      padding: 8,
+    },
+    notifyIcon: {
+      fontSize: 20,
+    },
+    notifyIconDisabled: {
+      opacity: 0.4,
+    },
+    content: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
 
-  // ── Golf Tournament Header ─────────────────────────────────────────────────
-  golfTournamentHeader: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  golfTournamentEmoji: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  golfTournamentName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: theme.text,
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  golfCourseName: {
-    fontSize: 14,
-    color: theme.textSecondary,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  golfStatusBadge: {
-    backgroundColor: theme.background,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginTop: 4,
-  },
-  golfStatusText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.text,
-  },
-  golfStatusLive: {
-    color: theme.live,
-  },
-  golfRoundInfo: {
-    fontSize: 13,
-    color: theme.textSecondary,
-    marginTop: 4,
-  },
+    // ── Golf Tournament Header ─────────────────────────────────────────────────
+    golfTournamentHeader: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 20,
+      marginBottom: 16,
+      alignItems: 'center',
+    },
+    golfTournamentEmoji: {
+      fontSize: 48,
+      marginBottom: 8,
+    },
+    golfTournamentName: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: theme.text,
+      textAlign: 'center',
+      marginBottom: 4,
+    },
+    golfCourseName: {
+      fontSize: 14,
+      color: theme.textSecondary,
+      textAlign: 'center',
+      marginBottom: 8,
+    },
+    golfStatusBadge: {
+      backgroundColor: theme.background,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      marginTop: 4,
+    },
+    golfStatusText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    golfStatusLive: {
+      color: theme.live,
+    },
+    golfRoundInfo: {
+      fontSize: 13,
+      color: theme.textSecondary,
+      marginTop: 4,
+    },
 
-  // ── Leaderboard ─────────────────────────────────────────────────────────────
-  leaderboardSection: {
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  leaderboardScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-  },
-  leaderboardHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: theme.primary,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    alignItems: 'center',
-  },
-  leaderboardHeaderText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: theme.textInverse,
-  },
-  leaderboardRow: {
-    flexDirection: 'row',
-    backgroundColor: theme.surface,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-    alignItems: 'center',
-  },
-  leaderboardRowEven: {
-    backgroundColor: theme.surfaceAlt,
-  },
-  leaderboardRowTop3: {
-    backgroundColor: theme.background,
-  },
-  leaderboardCell: {
-    fontSize: 13,
-    color: theme.text,
-  },
-  lbPos: {
-    width: 36,
-    textAlign: 'center',
-  },
-  lbPosTop3: {
-    fontWeight: 'bold',
-    color: theme.primary,
-  },
-  lbName: {
-    width: 160,
-    paddingRight: 6,
-  },
-  lbPlayerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  lbFlagImage: {
-    width: 20,
-    height: 14,
-    resizeMode: 'contain',
-  },
-  lbPlayerName: {
-    fontWeight: '500',
-    flexShrink: 1,
-  },
-  lbCountry: {
-    fontSize: 10,
-    color: theme.textSecondary,
-    marginTop: 1,
-  },
-  lbScore: {
-    width: 46,
-    textAlign: 'center',
-  },
-  lbScoreValue: {
-    fontWeight: 'bold',
-  },
-  lbToday: {
-    width: 46,
-    textAlign: 'center',
-  },
-  lbThru: {
-    width: 40,
-    textAlign: 'center',
-  },
-  lbRound: {
-    width: 36,
-    textAlign: 'center',
-  },
-  lbTotal: {
-    width: 40,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  noLeaderboard: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  noLeaderboardText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.text,
-    marginBottom: 4,
-  },
-  noLeaderboardSubtext: {
-    fontSize: 13,
-    color: theme.textSecondary,
-  },
+    // ── Leaderboard ─────────────────────────────────────────────────────────────
+    leaderboardSection: {
+      marginBottom: 16,
+      alignItems: 'center',
+    },
+    leaderboardScrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    leaderboardHeaderRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.primary,
+      borderTopLeftRadius: 12,
+      borderTopRightRadius: 12,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      alignItems: 'center',
+    },
+    leaderboardHeaderText: {
+      fontSize: 11,
+      fontWeight: 'bold',
+      color: theme.textInverse,
+    },
+    leaderboardRow: {
+      flexDirection: 'row',
+      backgroundColor: theme.surface,
+      paddingVertical: 10,
+      paddingHorizontal: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+      alignItems: 'center',
+    },
+    leaderboardRowEven: {
+      backgroundColor: theme.surfaceAlt,
+    },
+    leaderboardRowTop3: {
+      backgroundColor: theme.background,
+    },
+    leaderboardCell: {
+      fontSize: 13,
+      color: theme.text,
+    },
+    lbPos: {
+      width: 36,
+      textAlign: 'center',
+    },
+    lbPosTop3: {
+      fontWeight: 'bold',
+      color: theme.primary,
+    },
+    lbName: {
+      width: 160,
+      paddingRight: 6,
+    },
+    lbPlayerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    lbFlagImage: {
+      width: 20,
+      height: 14,
+      resizeMode: 'contain',
+    },
+    lbPlayerName: {
+      fontWeight: '500',
+      flexShrink: 1,
+    },
+    lbCountry: {
+      fontSize: 10,
+      color: theme.textSecondary,
+      marginTop: 1,
+    },
+    lbScore: {
+      width: 46,
+      textAlign: 'center',
+    },
+    lbScoreValue: {
+      fontWeight: 'bold',
+    },
+    lbToday: {
+      width: 46,
+      textAlign: 'center',
+    },
+    lbThru: {
+      width: 40,
+      textAlign: 'center',
+    },
+    lbRound: {
+      width: 36,
+      textAlign: 'center',
+    },
+    lbTotal: {
+      width: 40,
+      textAlign: 'center',
+      fontWeight: '600',
+    },
+    noLeaderboard: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 24,
+      alignItems: 'center',
+      marginBottom: 16,
+    },
+    noLeaderboardText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.text,
+      marginBottom: 4,
+    },
+    noLeaderboardSubtext: {
+      fontSize: 13,
+      color: theme.textSecondary,
+    },
 
-  // ── Starting Pitchers (Baseball) ────────────────────────────────────────────
-  pitchersSection: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  pitchersRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  pitcherBox: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 8,
-  },
-  pitcherHeadshot: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginBottom: 6,
-  },
-  pitcherName: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: theme.text,
-    textAlign: 'center',
-  },
-  pitcherJersey: {
-    fontSize: 11,
-    color: theme.textSecondary,
-    marginTop: 2,
-  },
-  pitcherStats: {
-    marginTop: 6,
-    alignItems: 'center',
-  },
-  pitcherStatText: {
-    fontSize: 11,
-    color: theme.text,
-    fontWeight: '500',
-  },
-  pitcherTBD: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.textSecondary,
-  },
-  pitcherVs: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.textSecondary,
-    marginHorizontal: 4,
-  },
+    // ── Starting Pitchers (Baseball) ────────────────────────────────────────────
+    pitchersSection: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 16,
+    },
+    pitchersRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-around',
+    },
+    pitcherBox: {
+      flex: 1,
+      alignItems: 'center',
+      paddingHorizontal: 8,
+    },
+    pitcherHeadshot: {
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      marginBottom: 6,
+    },
+    pitcherName: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.text,
+      textAlign: 'center',
+    },
+    pitcherJersey: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    pitcherStats: {
+      marginTop: 6,
+      alignItems: 'center',
+    },
+    pitcherStatText: {
+      fontSize: 11,
+      color: theme.text,
+      fontWeight: '500',
+    },
+    pitcherTBD: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    pitcherVs: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginHorizontal: 4,
+    },
 
-  // ── Game Score Section ──────────────────────────────────────────────────────
-  scoreContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  teamBox: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  teamLogoLarge: {
-    fontSize: 40,
-  },
-  teamNameLarge: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.text,
-    textAlign: 'center',
-  },
-  rankText: {
-    fontWeight: 'normal',
-    color: theme.textSecondary,
-  },
-  recordLarge: {
-    fontSize: 12,
-    color: theme.textSecondary,
-    marginTop: 4,
-  },
-  scoreCenter: {
-    alignItems: 'center',
-  },
-  scoreDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scoreStatus: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.live,
-    marginTop: 4,
-  },
-  scoreStatusFinal: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: theme.textSecondary,
-    marginTop: 4,
-  },
-  scoreLarge: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: theme.primary,
-  },
-  scoreLive: {
-    color: theme.live,
-  },
-  liveLabel: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.live,
-    marginTop: 2,
-  },
-  scoreSeparator: {
-    fontSize: 32,
-    color: theme.textSecondary,
-    marginHorizontal: 8,
-  },
-  teamLogoImage: {
-    width: 48,
-    height: 48,
-    resizeMode: 'contain',
-  },
-  pregameCenter: {
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    gap: 4,
-  },
-  pregameTime: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: theme.text,
-  },
-  pregameSpread: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: theme.textSecondary,
-  },
-  pregameOverUnder: {
-    fontSize: 14,
-    color: theme.textSecondary,
-  },
-  pregameNetwork: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.text,
-    marginTop: 4,
-  },
-  predictorSection: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  predictorTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.textSecondary,
-    marginBottom: 8,
-  },
-  predictorBarContainer: {
-    flexDirection: 'row',
-    height: 10,
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginHorizontal: 40,
-  },
-  predictorBarAway: {
-    backgroundColor: '#8899cc',
-  },
-  predictorBarHome: {
-    backgroundColor: '#3a4d8f',
-  },
-  predictorLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 6,
-    marginHorizontal: 40,
-  },
-  predictorLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  predictorPct: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.text,
-  },
-  predictorFavored: {
-    fontSize: 9,
-    fontWeight: 'bold',
-    color: theme.live,
-    letterSpacing: 0.5,
-  },
-  infoSection: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.border,
-  },
-  infoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: theme.textSecondary,
-  },
-  infoValue: {
-    fontSize: 12,
-    color: theme.text,
-    fontWeight: '500',
-  },
-  infoValueColumn: {
-    alignItems: 'flex-end',
-  },
-  infoValueSecondary: {
-    fontSize: 11,
-    color: theme.textSecondary,
-    marginTop: 2,
-  },
-  boxScoreSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.text,
-    marginBottom: 12,
-  },
-  teamStatsBox: {
-    backgroundColor: theme.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  teamStatsName: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: theme.primary,
-    marginBottom: 8,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  statItem: {
-    width: '23%',
-    backgroundColor: theme.background,
-    borderRadius: 6,
-    padding: 8,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: theme.textSecondary,
-  },
-  statValue: {
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: theme.text,
-    marginTop: 2,
-  },
-  notifyButtonLarge: {
-    backgroundColor: theme.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  notifyButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: theme.textInverse,
-  },
-  spacer: {
-    height: 20,
-  },
-  loadingOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: theme.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 12,
-  },
+    // ── Game Score Section ──────────────────────────────────────────────────────
+    scoreContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    teamBox: {
+      alignItems: 'center',
+      flex: 1,
+    },
+    logoContainer: {
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    teamLogoLarge: {
+      fontSize: 40,
+    },
+    teamNameLarge: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.text,
+      textAlign: 'center',
+    },
+    rankText: {
+      fontWeight: 'normal',
+      color: theme.textSecondary,
+    },
+    recordLarge: {
+      fontSize: 12,
+      color: theme.textSecondary,
+      marginTop: 4,
+    },
+    scoreCenter: {
+      alignItems: 'center',
+    },
+    scoreDisplay: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    scoreStatus: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.live,
+      marginTop: 4,
+    },
+    scoreStatusFinal: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginTop: 4,
+    },
+    scoreLarge: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      color: theme.primary,
+    },
+    scoreLive: {
+      color: theme.live,
+    },
+    liveLabel: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.live,
+      marginTop: 2,
+    },
+    scoreSeparator: {
+      fontSize: 32,
+      color: theme.textSecondary,
+      marginHorizontal: 8,
+    },
+    teamLogoImage: {
+      width: 48,
+      height: 48,
+      resizeMode: 'contain',
+    },
+    pregameCenter: {
+      alignItems: 'center',
+      paddingHorizontal: 8,
+      gap: 4,
+    },
+    pregameTime: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: theme.text,
+    },
+    pregameSpread: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    pregameOverUnder: {
+      fontSize: 14,
+      color: theme.textSecondary,
+    },
+    pregameNetwork: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: theme.text,
+      marginTop: 4,
+    },
+    predictorSection: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 16,
+    },
+    predictorTitle: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.textSecondary,
+      marginBottom: 8,
+    },
+    predictorBarContainer: {
+      flexDirection: 'row',
+      height: 10,
+      borderRadius: 5,
+      overflow: 'hidden',
+      marginHorizontal: 40,
+    },
+    predictorBarAway: {
+      backgroundColor: '#8899cc',
+    },
+    predictorBarHome: {
+      backgroundColor: '#3a4d8f',
+    },
+    predictorLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: 6,
+      marginHorizontal: 40,
+    },
+    predictorLabelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    predictorPct: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.text,
+    },
+    predictorFavored: {
+      fontSize: 9,
+      fontWeight: 'bold',
+      color: theme.live,
+      letterSpacing: 0.5,
+    },
+    infoSection: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 16,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    infoLabel: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    infoValue: {
+      fontSize: 12,
+      color: theme.text,
+      fontWeight: '500',
+    },
+    infoValueColumn: {
+      alignItems: 'flex-end',
+    },
+    infoValueSecondary: {
+      fontSize: 11,
+      color: theme.textSecondary,
+      marginTop: 2,
+    },
+    boxScoreSection: {
+      marginBottom: 16,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginBottom: 12,
+    },
+    teamStatsBox: {
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+    },
+    teamStatsName: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.primary,
+      marginBottom: 8,
+    },
+    statsGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+    },
+    statItem: {
+      width: '23%',
+      backgroundColor: theme.background,
+      borderRadius: 6,
+      padding: 8,
+      alignItems: 'center',
+    },
+    statLabel: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: theme.textSecondary,
+    },
+    statValue: {
+      fontSize: 13,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginTop: 2,
+    },
+    spacer: {
+      height: 20,
+    },
+    loadingOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: theme.overlay,
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderRadius: 12,
+    },
   });
 
 export default BoxScoreModal;

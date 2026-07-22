@@ -7,9 +7,15 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Game, GameSummary, SportType, UserPreferences } from '@types/index';
 import { DEFAULT_USER_PREFERENCES } from '@constants/index';
+import { cancelGameReminder } from '@services/notificationService';
 
 // AsyncStorage key for the persisted slice of the store.
 const PERSIST_KEY = 'sports-tv-guide-store';
+
+interface ScheduledReminder {
+  notificationId: string;
+  startTime: string; // ISO 8601, copied from Game.startTime at schedule time
+}
 
 interface GameState {
   // Games data
@@ -21,6 +27,9 @@ interface GameState {
   // User preferences
   preferences: UserPreferences;
 
+  // Scheduled game-start reminder notifications, keyed by game id.
+  scheduledReminders: Record<string, ScheduledReminder>;
+
   // Actions
   setGames: (sport: SportType, games: Game[]) => void;
   setSelectedGame: (game: GameSummary | null) => void;
@@ -31,6 +40,9 @@ interface GameState {
   toggleFavoriteTeam: (teamId: string) => void;
   addSelectedSport: (sport: SportType) => void;
   removeSelectedSport: (sport: SportType) => void;
+  addScheduledReminder: (gameId: string, notificationId: string, startTime: string) => void;
+  removeScheduledReminder: (gameId: string) => void;
+  pruneExpiredReminders: () => void;
   clearCache: () => void;
 }
 
@@ -42,12 +54,29 @@ export const useGameStore = create<GameState>()(
       loading: false,
       error: null,
       preferences: DEFAULT_USER_PREFERENCES,
+      scheduledReminders: {},
 
       setGames: (sport: SportType, games: Game[]) =>
         set((state) => {
           const newGames = new Map(state.games);
           newGames.set(sport, games);
-          return { games: newGames };
+
+          // Drop reminders for games that are no longer scheduled/live (completed,
+          // postponed, canceled) so scheduledReminders doesn't accumulate stale entries.
+          const remainingReminders = { ...state.scheduledReminders };
+          const idsToCancel: string[] = [];
+          games.forEach((game) => {
+            const reminder = remainingReminders[game.id];
+            if (reminder && game.status !== 'scheduled' && game.status !== 'in_progress') {
+              idsToCancel.push(reminder.notificationId);
+              delete remainingReminders[game.id];
+            }
+          });
+          idsToCancel.forEach((id) => {
+            cancelGameReminder(id).catch(() => {});
+          });
+
+          return { games: newGames, scheduledReminders: remainingReminders };
         }),
 
       setSelectedGame: (game: GameSummary | null) => set({ selectedGame: game }),
@@ -110,6 +139,41 @@ export const useGameStore = create<GameState>()(
           };
         }),
 
+      addScheduledReminder: (gameId: string, notificationId: string, startTime: string) =>
+        set((state) => ({
+          scheduledReminders: {
+            ...state.scheduledReminders,
+            [gameId]: { notificationId, startTime },
+          },
+        })),
+
+      removeScheduledReminder: (gameId: string) =>
+        set((state) => {
+          const remaining = { ...state.scheduledReminders };
+          delete remaining[gameId];
+          return { scheduledReminders: remaining };
+        }),
+
+      pruneExpiredReminders: () =>
+        set((state) => {
+          const remaining = { ...state.scheduledReminders };
+          const idsToCancel: string[] = [];
+          const now = Date.now();
+
+          Object.entries(remaining).forEach(([gameId, reminder]) => {
+            if (new Date(reminder.startTime).getTime() <= now) {
+              idsToCancel.push(reminder.notificationId);
+              delete remaining[gameId];
+            }
+          });
+
+          idsToCancel.forEach((id) => {
+            cancelGameReminder(id).catch(() => {});
+          });
+
+          return { scheduledReminders: remaining };
+        }),
+
       clearCache: () =>
         set({
           games: new Map(),
@@ -120,10 +184,13 @@ export const useGameStore = create<GameState>()(
     {
       name: PERSIST_KEY,
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist user preferences. Games are volatile fetched data (and
-      // `games` is a Map, which JSON cannot serialize), while selectedGame,
-      // loading, and error are transient UI state.
-      partialize: (state) => ({ preferences: state.preferences }),
+      // Only persist user preferences and scheduled reminders. Games are
+      // volatile fetched data (and `games` is a Map, which JSON cannot
+      // serialize), while selectedGame, loading, and error are transient UI state.
+      partialize: (state) => ({
+        preferences: state.preferences,
+        scheduledReminders: state.scheduledReminders,
+      }),
     }
   )
 );

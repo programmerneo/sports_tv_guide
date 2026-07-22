@@ -16,9 +16,14 @@ import FavoritesScreen from '@screens/FavoritesScreen';
 import NotificationsScreen from '@screens/NotificationsScreen';
 import ProfileScreen from '@screens/ProfileScreen';
 
-import { useGameStore } from '@store/gameStore';
+import { useGameStore, getAllGames } from '@store/gameStore';
 import { useTheme } from '@/hooks/useTheme';
 import { StandingsScreenParams } from '@types/index';
+import {
+  configureNotificationHandler,
+  addNotificationReceivedListener,
+  addNotificationResponseListener,
+} from '@services/notificationService';
 
 // Bottom tab param list — only screens that accept navigation params need an
 // entry here (the rest default to `undefined`).
@@ -137,6 +142,11 @@ export default function App() {
     const initializeApp = async () => {
       try {
         // Add any initialization logic here (load preferences, etc.)
+        await configureNotificationHandler();
+        // Drop reminders whose target game time already passed (e.g. web tab
+        // was closed while a reminder was pending, or the sport is no longer
+        // fetched) so stale entries don't linger indefinitely.
+        useGameStore.getState().pruneExpiredReminders();
         setAppReady(true);
       } catch (error) {
         console.error('Failed to initialize app:', error);
@@ -145,6 +155,31 @@ export default function App() {
     };
 
     initializeApp();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeReceived = addNotificationReceivedListener((gameId) => {
+      useGameStore.getState().removeScheduledReminder(gameId);
+    });
+
+    const unsubscribeResponse = addNotificationResponseListener((gameId) => {
+      const game = getAllGames(useGameStore.getState()).find((g) => g.id === gameId);
+      if (game) {
+        const title = `${game.awayTeam.name} @ ${game.homeTeam.name}`;
+        const subtitle =
+          game.status === 'scheduled'
+            ? 'This game is about to start.'
+            : 'This game has already started.';
+        Alert.alert(title, subtitle);
+      } else {
+        Alert.alert('Game reminder', 'This reminder was for one of your saved games.');
+      }
+    });
+
+    return () => {
+      unsubscribeReceived();
+      unsubscribeResponse();
+    };
   }, []);
 
   if (!appReady) {
@@ -169,4 +204,4 @@ export default function App() {
 }
 
 // Simple Text component for tab icons (temporary)
-import { Text } from 'react-native';
+import { Text, Alert } from 'react-native';

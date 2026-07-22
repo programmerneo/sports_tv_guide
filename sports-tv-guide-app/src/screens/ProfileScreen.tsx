@@ -5,13 +5,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGameStore } from '@store/gameStore';
 import { useTheme } from '@/hooks/useTheme';
 import { ThemeColors } from '@constants/theme';
+import { cancelGameReminder } from '@services/notificationService';
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   const darkModeEnabled = useGameStore((state) => state.preferences.darkModeEnabled);
+  const notificationsEnabled = useGameStore((state) => state.preferences.notificationsEnabled);
   const setPreferences = useGameStore((state) => state.setPreferences);
+  const scheduledReminders = useGameStore((state) => state.scheduledReminders);
+  const removeScheduledReminder = useGameStore((state) => state.removeScheduledReminder);
+
+  const handleNotificationsToggle = async (value: boolean) => {
+    if (!value) {
+      for (const [gameId, notificationId] of Object.entries(scheduledReminders)) {
+        await cancelGameReminder(notificationId);
+        removeScheduledReminder(gameId);
+      }
+    }
+    setPreferences({ notificationsEnabled: value });
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -29,6 +43,22 @@ export default function ProfileScreen() {
           <Switch
             value={darkModeEnabled}
             onValueChange={(value) => setPreferences({ darkModeEnabled: value })}
+            trackColor={{ false: theme.border, true: theme.primary }}
+            thumbColor={theme.surface}
+          />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Notifications</Text>
+        <View style={styles.row}>
+          <View style={styles.rowLabelGroup}>
+            <Text style={styles.rowLabel}>Game Reminders</Text>
+            <Text style={styles.rowDescription}>Get notified before games start</Text>
+          </View>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleNotificationsToggle}
             trackColor={{ false: theme.border, true: theme.primary }}
             thumbColor={theme.surface}
           />
