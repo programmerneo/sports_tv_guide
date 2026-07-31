@@ -129,8 +129,9 @@ const HomeScreen: React.FC = () => {
   );
 
   /**
-   * Check which sports with a "🏆 Standings" header link (MLB/NFL) are
-   * currently in season, so the link only shows up when it'd be useful.
+   * Check which sports with a "🏆 Standings" header link (every key in
+   * HOME_TO_STANDINGS_SPORT — MLB/NFL/NCAAF) are currently in season, so the
+   * link only shows up when it'd be useful.
    */
   const loadStandingsAvailability = useCallback(async () => {
     const entries = Object.entries(HOME_TO_STANDINGS_SPORT) as [SportType, StandingsSportType][];

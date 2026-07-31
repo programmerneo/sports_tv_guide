@@ -11,6 +11,8 @@ from fastapi.testclient import TestClient
 from services.standings_service import StandingsService
 
 from tests.fixtures.espn_data import (
+    SAMPLE_CFB_ENTRY,
+    SAMPLE_ESPN_STANDINGS_CFB,
     SAMPLE_ESPN_STANDINGS_FLAT,
     SAMPLE_ESPN_STANDINGS_NESTED,
     SAMPLE_NFL_ENTRY_NO_TIES,
@@ -56,6 +58,14 @@ def test_format_team_wins_losses_not_in_result() -> None:
     assert "losses" not in result
 
 
+def test_format_team_football_college_uses_overall_record() -> None:
+    """CFB has no losses/ties stat, so the pre-joined ``overall`` is the record."""
+    result = StandingsService._format_team(SAMPLE_CFB_ENTRY, "football-college")
+    assert result["record"] == "13-3"
+    assert "overall" not in result
+    assert result["playoffSeed"] == "3"
+
+
 # ── _extract_stats ────────────────────────────────────────────────────────────
 
 
@@ -78,6 +88,13 @@ def test_extract_stats_ignores_unknown_names() -> None:
     stats = [{"name": "unknownMetric", "displayValue": "42"}]
     result = StandingsService._extract_stats(stats, "nhl")
     assert result == {}
+
+
+def test_extract_stats_keeps_first_of_repeated_names() -> None:
+    """College endpoints repeat stat names per split; the overall value wins."""
+    result = StandingsService._extract_stats(SAMPLE_CFB_ENTRY["stats"], "football-college")
+    assert result["pointsFor"] == "495"
+    assert result["playoffSeed"] == "3"
 
 
 # ── filter_by_conference ──────────────────────────────────────────────────────
@@ -210,6 +227,32 @@ async def test_fetch_standings_nested_structure(monkeypatch: pytest.MonkeyPatch)
 
     nl_group = next(g for g in result["groups"] if "National" in g["league"])
     assert nl_group["name"] == "National League East"
+
+
+@pytest.mark.asyncio
+async def test_fetch_standings_football_college(monkeypatch: pytest.MonkeyPatch) -> None:
+    """FBS response produces one group per conference with formatted teams."""
+    monkeypatch.setattr(
+        "services.standings_service.get_client",
+        lambda: _MockClient(SAMPLE_ESPN_STANDINGS_CFB),
+    )
+
+    result = await StandingsService.fetch_standings("football-college")
+
+    assert result["sport"] == "football-college"
+    assert result["league"] == "FBS"
+    assert len(result["groups"]) == 1
+    group = result["groups"][0]
+    assert group["name"] == "Atlantic Coast Conference"
+    assert group["abbreviation"] == "acc"
+    assert group["teams"][0]["record"] == "13-3"
+
+
+@pytest.mark.asyncio
+async def test_fetch_standings_unsupported_sport_raises() -> None:
+    """An unknown sport key is rejected before any HTTP call."""
+    with pytest.raises(ValueError, match="Unsupported sport"):
+        await StandingsService.fetch_standings("cricket")
 
 
 # ── is_in_season ────────────────────────────────────────────────────────────
@@ -374,6 +417,42 @@ def test_standings_route_returns_404_when_season_ended(client: TestClient, monke
 
     assert resp.status_code == 404
     assert "nfl" in resp.json()["detail"]
+
+
+def test_standings_route_football_college_404_when_out_of_season(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """College football is gated too, so it 404s out of season."""
+
+    async def _not_in_season(sport: str) -> bool:
+        return False
+
+    monkeypatch.setattr(StandingsService, "is_in_season", _not_in_season)
+
+    resp = client.get("/api/standings/football-college")
+
+    assert resp.status_code == 404
+    assert "football-college" in resp.json()["detail"]
+
+
+def test_standings_route_football_college_returns_groups(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    """In season, the CFB route returns formatted conference groups."""
+
+    async def _in_season(sport: str) -> bool:
+        return True
+
+    monkeypatch.setattr(StandingsService, "is_in_season", _in_season)
+    monkeypatch.setattr(
+        "services.standings_service.get_client",
+        lambda: _MockClient(SAMPLE_ESPN_STANDINGS_CFB),
+    )
+
+    resp = client.get("/api/standings/football-college")
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["sport"] == "football-college"
+    assert body["groups"][0]["abbreviation"] == "acc"
 
 
 # ── /standings/{sport}/status ────────────────────────────────────────────────

@@ -10,15 +10,25 @@ Track of what's in progress and what still needs work.
 
 #### Standings — College Sports
 - ✅ Add `basketball-college` standings to UI (shipped in commit `03e76da`)
-- 📋 Add `football-college` standings (backend + UI)
-  - [ ] Add ESPN URL to `STANDINGS_URLS` in `constants/espn.py`
-  - [ ] Add route to `api/standings.py` (`_PATH_TO_SPORT`)
-  - [ ] Add `football-college` to `STANDINGS_SPORTS` in `StandingsScreen.tsx`
-  - [ ] Define column config in `COLUMNS` (W-L-T, PCT, PF, PA)
-  - [ ] Add label/emoji to `SPORT_INFO`
-  - [ ] Add to `StandingsSportType` in `src/types/index.ts`
-
-**Estimated:** 1-2 hours
+- ✅ Add `football-college` standings (backend + UI) — all 6 touch-points done
+  - [x] Add ESPN URL to `STANDINGS_URLS` in `constants/espn.py` (no `level`/`groups` param — that
+        endpoint is already FBS-scoped, 11 conference groups) plus `STANDINGS_EXTRA_STATS` and
+        `POSTSEASON_SPORT_PATHS` (so NCAAF standings are season-gated, late Aug → ~Jan 21)
+  - [x] Add route to `api/standings.py` (`_PATH_TO_SPORT`) — `/api/standings/football-college`
+        and `/api/standings/football-college/status`
+  - [x] Add `football-college` to `STANDINGS_SPORTS` in `StandingsScreen.tsx`
+  - [x] Define column config in `COLUMNS` — W-L, Conf, PF, PA (**no** PCT: ESPN's college
+        football standings carry no `winPercent` stat)
+  - [x] Add label/emoji to `SPORT_INFO` ('NCAAF' 🏈)
+  - [x] Add to `StandingsSportType` in `src/types/index.ts`
+- ✅ Bug fixed along the way: `football-college` was missing from
+  `DEFAULT_USER_PREFERENCES.selectedSports`, so CFB games were never fetched and never appeared
+  in the TV guide at all. Also added to `HOME_TO_STANDINGS_SPORT`, giving NCAAF a Home-screen
+  "🏆 Standings" link gated on season status (correctly hidden while out of season).
+- ✅ Two general standings fixes: `_extract_stats` now keeps the *first* occurrence of a stat
+  name (college endpoints repeat every name once per split), which also fixed latent value
+  corruption for basketball-college; `_format_team` prefers ESPN's pre-joined `overall` record
+  string when present.
 
 #### Favorites Functionality
 FavoritesScreen is shipped: shows saved games (sorted by start time), star toggle to
@@ -29,7 +39,10 @@ add/remove, wired to the store, and persisted via AsyncStorage. Remaining:
 **Estimated:** 1 hour
 
 #### Search Functionality
-- 📋 Implement SearchScreen
+**Next up.** `src/screens/SearchScreen.tsx` is still a 28-line placeholder (renders two static
+`<Text>` lines) and isn't registered in any navigator — this needs building from scratch, not
+finishing.
+- 📋 Implement SearchScreen (and register it in `src/App.tsx`)
   - [ ] Search by team name
   - [ ] Search by sport
   - [ ] Search by date
@@ -56,8 +69,9 @@ add/remove, wired to the store, and persisted via AsyncStorage. Remaining:
 - 📋 Still open:
   - [ ] Live/close-game alerts (score-based, requires polling + diffing — no ESPN push/webhook)
   - [ ] Daily digest notification
-  - [ ] Real notification history (`NotificationsScreen` still just lists upcoming/live games,
-        not actual sent reminders)
+  - [ ] Real notification history (`NotificationsScreen` now correctly filters live/upcoming games
+        down to those with an active scheduled reminder, favorites first, with per-row cancel —
+        but it's still a view of *pending* reminders, not a log of actually sent ones)
   - [ ] Configurable lead time (currently a single fixed value)
 
 ### Medium Priority
@@ -308,6 +322,7 @@ Before implementing new features, consider:
 
 ---
 
-**Last Updated:** July 18, 2026
+**Last Updated:** July 31, 2026
 **Current Status:** Feature Development Phase
-**Next Priority:** College Football Standings + Search (Favorites, dark mode & persistence shipped)
+**Next Priority:** Search — build `SearchScreen` and register it in the navigator (College football
+standings, Favorites, game-start reminders, dark mode & persistence all shipped)

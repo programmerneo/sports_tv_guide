@@ -23,6 +23,9 @@ STANDINGS_URLS: dict[str, str] = {
     "mlb": f"{ESPN_API}/baseball/mlb/standings?level=3",
     "nhl": f"{ESPN_API}/hockey/nhl/standings?level=3",
     "basketball-college": f"{ESPN_API}/basketball/mens-college-basketball/standings",
+    # No level/group param needed: this endpoint already scopes to FBS (its
+    # ``name`` is "FBS" and it returns exactly the 11 FBS conference groups).
+    "football-college": f"{ESPN_API}/football/college-football/standings",
 }
 
 # ── Standings stat fields to extract per team ─────────────────────────────────
@@ -58,6 +61,15 @@ STANDINGS_EXTRA_STATS: dict[str, list[str]] = {
         "regulationWins",
     ],
     "basketball-college": [
+        "leagueWinPercent",
+        "gamesBehind",
+        "playoffSeed",
+    ],
+    # College football standings entries carry no ``losses`` or ``ties`` stat —
+    # the overall record only arrives pre-joined as ``overall`` (e.g. "13-3"),
+    # which ``_format_team`` uses directly as the record.
+    "football-college": [
+        "overall",
         "leagueWinPercent",
         "gamesBehind",
         "playoffSeed",
@@ -106,11 +118,12 @@ CONFERENCE_SHORT_NAMES: dict[str, str] = {
 # ── Postseason (core API) sport/league paths ─────────────────────────────────
 # Used to build ESPN core API URLs for looking up a season's regular-season
 # and postseason windows, e.g. to gate standings before the season starts and
-# after the championship has ended. Only NFL and MLB are gated; other sports
-# don't have a season-ending cutoff.
+# after the championship has ended. Only NFL, MLB, and college football are
+# gated; other sports don't have a season-ending cutoff.
 POSTSEASON_SPORT_PATHS: dict[str, str] = {
     "nfl": "football/nfl",
     "mlb": "baseball/mlb",
+    "football-college": "football/college-football",
 }
 
 ESPN_CORE_API = "https://sports.core.api.espn.com/v2/sports"
@@ -125,7 +138,7 @@ def season_url(sport: str, year: int) -> str:
     "has the championship ended".
 
     Args:
-        sport: Short sport key (``'nfl'`` or ``'mlb'``).
+        sport: Short sport key (e.g. ``'nfl'``, ``'mlb'``, ``'football-college'``).
         year: Season year (the year the season started).
 
     Returns:

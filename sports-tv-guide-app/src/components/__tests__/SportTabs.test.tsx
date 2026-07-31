@@ -32,4 +32,34 @@ describe('SportTabs standings pills', () => {
 
     expect(screen.queryByText(/Standings/)).toBeNull();
   });
+
+  it('renders an NCAAF standings pill when college football is in season', () => {
+    const onStandingsPress = jest.fn();
+
+    render(
+      <SportTabs
+        selectedSport={null}
+        onSelectSport={jest.fn()}
+        standingsAvailable={{ 'football-college': true }}
+        onStandingsPress={onStandingsPress}
+      />
+    );
+
+    fireEvent.press(screen.getByText('NCAAF Standings'));
+
+    expect(onStandingsPress).toHaveBeenCalledWith('football-college');
+  });
+
+  it('hides the NCAAF standings pill when college football is out of season', () => {
+    render(
+      <SportTabs
+        selectedSport={null}
+        onSelectSport={jest.fn()}
+        standingsAvailable={{ 'football-college': false }}
+        onStandingsPress={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText('NCAAF Standings')).toBeNull();
+  });
 });

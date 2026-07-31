@@ -1,7 +1,7 @@
 """
 Standings via ESPN's public API (no scraping).
 
-Supports NFL, MLB, NHL, and NCAA college basketball.
+Supports NFL, MLB, NHL, and NCAA college basketball and football.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ _PATH_TO_SPORT: dict[str, str] = {
     "mlb": "mlb",
     "nhl": "nhl",
     "basketball-college": "basketball-college",
+    "football-college": "football-college",
 }
 
 
@@ -27,6 +28,7 @@ _PATH_TO_SPORT: dict[str, str] = {
 @router.get("/standings/mlb/status")
 @router.get("/standings/nhl/status")
 @router.get("/standings/basketball-college/status")
+@router.get("/standings/football-college/status")
 async def standings_status(request: Request) -> dict[str, str | bool]:
     """Whether a sport's standings are currently in season."""
     sport = request.url.path.split("/")[3]
@@ -44,6 +46,7 @@ async def standings_status(request: Request) -> dict[str, str | bool]:
 @router.get("/standings/mlb")
 @router.get("/standings/nhl")
 @router.get("/standings/basketball-college")
+@router.get("/standings/football-college")
 async def standings(request: Request, conference: str | None = None) -> dict[str, Any]:
     """Standings for a given sport.
 

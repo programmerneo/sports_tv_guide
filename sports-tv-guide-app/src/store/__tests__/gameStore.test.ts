@@ -10,6 +10,7 @@ import {
   getGamesBySport,
 } from '../gameStore';
 import { Game, SportType } from '@types/index';
+import { DEFAULT_USER_PREFERENCES } from '@constants/index';
 
 // Sample game fixtures matching backend response shape
 const SAMPLE_SCHEDULED_GAME: Game = {
@@ -217,6 +218,10 @@ describe('getGamesBySport', () => {
 });
 
 describe('preferences', () => {
+  it('defaults select football-college so its schedule is fetched', () => {
+    expect(DEFAULT_USER_PREFERENCES.selectedSports).toContain('football-college');
+  });
+
   it('addSelectedSport adds a sport', () => {
     const { addSelectedSport } = useGameStore.getState();
     addSelectedSport('football-college');

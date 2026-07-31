@@ -641,3 +641,40 @@ SAMPLE_NFL_ENTRY_NO_TIES = _make_team_entry(
         "pointsAgainst": "275",
     },
 )
+
+# College football entry — ESPN sends no ``losses``/``ties``, only a pre-joined
+# ``overall`` record, and repeats every stat ``name`` once per split.
+SAMPLE_CFB_ENTRY = {
+    "team": {
+        "displayName": "Miami Hurricanes",
+        "shortDisplayName": "Miami",
+        "abbreviation": "MIA",
+        "logos": [{"href": "https://example.com/mia.png"}],
+    },
+    "stats": [
+        {"name": "wins", "type": "wins", "displayValue": "13"},
+        {"name": "leagueWinPercent", "type": "leaguewinpercent", "displayValue": "0.750"},
+        {"name": "gamesBehind", "type": "gamesbehind", "displayValue": "-"},
+        {"name": "playoffSeed", "type": "playoffseed", "displayValue": "3"},
+        {"name": "pointsFor", "type": "pointsfor", "displayValue": "495"},
+        {"name": "pointsAgainst", "type": "pointsagainst", "displayValue": "237"},
+        {"name": "overall", "type": "total", "displayValue": "13-3"},
+        # Split duplicates that must not clobber the overall values above.
+        {"name": "wins", "type": "homerecord_wins", "displayValue": "7"},
+        {"name": "pointsFor", "type": "homerecord_pointsfor", "displayValue": "300"},
+        {"name": "playoffSeed", "type": "awayrecord_playoffseed", "displayValue": "0"},
+    ],
+}
+
+# Flat FBS structure — children are conferences with direct entries
+SAMPLE_ESPN_STANDINGS_CFB = {
+    "name": "FBS",
+    "seasons": [{"displayName": "2026"}],
+    "children": [
+        {
+            "name": "Atlantic Coast Conference",
+            "abbreviation": "acc",
+            "standings": {"entries": [SAMPLE_CFB_ENTRY]},
+        },
+    ],
+}

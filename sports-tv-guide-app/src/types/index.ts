@@ -239,7 +239,7 @@ export interface BracketResponse {
 
 // --- Standings Types ---
 
-export type StandingsSportType = 'nfl' | 'mlb' | 'nhl' | 'basketball-college';
+export type StandingsSportType = 'nfl' | 'mlb' | 'nhl' | 'basketball-college' | 'football-college';
 
 // Navigation params accepted by the Standings tab screen — passed e.g. from
 // the Home screen's per-sport "🏆 Standings" header link to preselect a sport.

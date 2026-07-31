@@ -1,7 +1,7 @@
 """
 Fetch standings from ESPN's public API.
 
-Supports NFL, MLB, NHL, and NCAA college basketball.
+Supports NFL, MLB, NHL, and NCAA college basketball and football.
 """
 
 from __future__ import annotations
@@ -39,11 +39,12 @@ class StandingsService:
     async def is_in_season(cls, sport: str) -> bool:
         """Check whether a sport's regular season or postseason is active.
 
-        Only NFL and MLB are gated; other sports are always considered
-        available. A gated sport is "in season" for a candidate year if the
-        current time falls between that season's regular-season start and
-        postseason end. Two candidate years are tried (the current year,
-        then the previous year) to cover the Jan/Feb window where the
+        Only NFL, MLB, and college football are gated; other sports are
+        always considered available. A gated sport is "in season" for a
+        candidate year if the current time falls between that season's
+        regular-season start and postseason end. Two candidate years are
+        tried (the current year, then the previous year) to cover the
+        Jan/Feb window where the
         relevant season is still the previous year's (e.g. a season that
         runs Sept 2025 -> Feb 2026).
 
@@ -124,7 +125,9 @@ class StandingsService:
         """Fetch current standings for a sport.
 
         Args:
-            sport: ``'nfl'``, ``'mlb'``, ``'nhl'``, or ``'basketball-college'``.
+            sport: One of the keys in
+                :data:`constants.espn.STANDINGS_URLS` (e.g. ``'nfl'``,
+                ``'basketball-college'``, ``'football-college'``).
 
         Returns:
             Dictionary with league name and a list of conference/division groups.
@@ -208,7 +211,10 @@ class StandingsService:
         by_name: dict[str, str] = {}
         for s in stats:
             name = s.get("name") or s.get("type", "")
-            if name in desired:
+            # College endpoints repeat every stat ``name`` once per split
+            # (overall, then homerecord_*, awayrecord_*, vsconf_*, ...), so keep
+            # the first occurrence — the overall value — and ignore the splits.
+            if name in desired and name not in by_name:
                 by_name[name] = s.get("displayValue", s.get("value", ""))
         return by_name
 
@@ -218,11 +224,14 @@ class StandingsService:
         team = entry.get("team", {})
         stats = cls._extract_stats(entry.get("stats", []), sport)
 
-        # Build a record string from wins/losses(/ties).
-        wins = stats.get("wins", "0")
-        losses = stats.get("losses", "0")
-        ties = stats.get("ties")
-        record = f"{wins}-{losses}-{ties}" if ties and ties != "0" else f"{wins}-{losses}"
+        # Prefer ESPN's pre-joined overall record (college football has no
+        # ``losses``/``ties`` stat), else build one from wins/losses(/ties).
+        record = stats.get("overall")
+        if not record:
+            wins = stats.get("wins", "0")
+            losses = stats.get("losses", "0")
+            ties = stats.get("ties")
+            record = f"{wins}-{losses}-{ties}" if ties and ties != "0" else f"{wins}-{losses}"
 
         result: dict = {
             "team": team.get("displayName", ""),
@@ -231,8 +240,8 @@ class StandingsService:
             "logo": (team.get("logos") or [{}])[0].get("href", ""),
             "record": record,
         }
-        # Include all extracted stats (minus wins/losses/ties already in record).
+        # Include all extracted stats (minus those already folded into record).
         for key, val in stats.items():
-            if key not in ("wins", "losses", "ties"):
+            if key not in ("wins", "losses", "ties", "overall"):
                 result[key] = val
         return result

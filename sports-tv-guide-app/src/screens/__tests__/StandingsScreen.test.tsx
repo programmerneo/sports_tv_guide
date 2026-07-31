@@ -15,14 +15,41 @@ import { StandingsResponse, StandingsScreenParams } from '@types/index';
 
 const NHL_STANDINGS: StandingsResponse = {
   sport: 'nhl',
+  league: 'National Hockey League',
   season: `${new Date().getFullYear()}`,
   groups: [],
 };
 
 const MLB_STANDINGS: StandingsResponse = {
   sport: 'mlb',
+  league: 'Major League Baseball',
   season: `${new Date().getFullYear()}`,
   groups: [],
+};
+
+const CFB_STANDINGS: StandingsResponse = {
+  sport: 'football-college',
+  league: 'NCAA Football',
+  season: `${new Date().getFullYear()}`,
+  groups: [
+    {
+      name: 'Big Ten Conference',
+      abbreviation: 'B1G',
+      league: null,
+      teams: [
+        {
+          team: 'Ohio State Buckeyes',
+          shortName: 'Ohio State',
+          abbreviation: 'OSU',
+          logo: '',
+          record: '11-1',
+          leagueWinPercent: '.875',
+          pointsFor: '480',
+          pointsAgainst: '210',
+        },
+      ],
+    },
+  ],
 };
 
 const Stack = createNativeStackNavigator();
@@ -78,6 +105,42 @@ describe('StandingsScreen', () => {
       expect.arrayContaining([expect.objectContaining({ color: lightTheme.textInverse })])
     );
     expect(nhlTabText.props.style).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ color: lightTheme.textInverse })])
+    );
+  });
+
+  it('renders football-college standings with its conference groups and columns', async () => {
+    jest.spyOn(apiService, 'getStandings').mockImplementation(async (sport) => {
+      if (sport === 'football-college') return CFB_STANDINGS;
+      throw new Error(`HTTP 404: ${sport} season has ended`);
+    });
+
+    renderScreen({ sport: 'football-college' });
+
+    await waitFor(() => expect(screen.queryByText('🏈 NCAAF')).toBeTruthy());
+
+    // Conference name is the section header (no league sub-tabs for college sports).
+    expect(screen.getByText('Big Ten')).toBeTruthy();
+    ['W-L', 'Conf', 'PF', 'PA'].forEach((label) => {
+      expect(screen.getByText(label)).toBeTruthy();
+    });
+    expect(screen.getByText('11-1')).toBeTruthy();
+    expect(screen.getByText('.875')).toBeTruthy();
+  });
+
+  it('omits football-college when it is out of season', async () => {
+    jest.spyOn(apiService, 'getStandings').mockImplementation(async (sport) => {
+      if (sport === 'nhl') return NHL_STANDINGS;
+      throw new Error(`HTTP 404: ${sport} season has ended`);
+    });
+
+    renderScreen({ sport: 'football-college' });
+
+    await waitFor(() => expect(screen.queryByText('🏒 NHL')).toBeTruthy());
+
+    expect(screen.queryByText('🏈 NCAAF')).toBeNull();
+    // The unavailable requested sport must not be selected — NHL falls back in.
+    expect(screen.getByText('🏒 NHL').props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({ color: lightTheme.textInverse })])
     );
   });

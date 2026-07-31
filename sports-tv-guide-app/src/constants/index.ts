@@ -35,6 +35,7 @@ export const SPORTS: Record<SportType, { label: string; emoji: string; displayNa
 export const HOME_TO_STANDINGS_SPORT: Partial<Record<SportType, StandingsSportType>> = {
   'baseball-mlb': 'mlb',
   'football-nfl': 'nfl',
+  'football-college': 'football-college',
 };
 
 export const NETWORK_LOGOS: Record<string, string> = {
@@ -117,6 +118,7 @@ export const DEFAULT_USER_PREFERENCES = {
   darkModeEnabled: false,
   selectedSports: [
     'football-nfl',
+    'football-college',
     'basketball-college',
     'hockey-nhl',
     'baseball-mlb',

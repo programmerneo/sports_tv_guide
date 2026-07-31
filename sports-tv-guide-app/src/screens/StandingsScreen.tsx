@@ -26,13 +26,20 @@ import { RouteProp } from '@react-navigation/native';
 
 type StandingsScreenRouteProp = RouteProp<{ Standings: StandingsScreenParams }, 'Standings'>;
 
-const STANDINGS_SPORTS: StandingsSportType[] = ['nhl', 'mlb', 'nfl', 'basketball-college'];
+const STANDINGS_SPORTS: StandingsSportType[] = [
+  'nhl',
+  'mlb',
+  'nfl',
+  'basketball-college',
+  'football-college',
+];
 
 const SPORT_INFO: Record<StandingsSportType, { label: string; emoji: string }> = {
   nhl: { label: 'NHL', emoji: '🏒' },
   mlb: { label: 'MLB', emoji: '⚾' },
   nfl: { label: 'NFL', emoji: '🏈' },
   'basketball-college': { label: 'NCAAB', emoji: '🏀' },
+  'football-college': { label: 'NCAAF', emoji: '🏈' },
 };
 
 interface ColumnDef {
@@ -70,14 +77,28 @@ const COLUMNS: Record<StandingsSportType, ColumnDef[]> = {
     { key: 'winPercent', label: 'PCT', width: 44 },
     { key: 'leagueWinPercent', label: 'Conf', width: 52 },
   ],
+  // ESPN's college football standings carry no winPercent stat, so there's no
+  // PCT column here (unlike NFL); leagueWinPercent stands in as the conf figure.
+  'football-college': [
+    { key: 'record', label: 'W-L', width: 52 },
+    { key: 'leagueWinPercent', label: 'Conf', width: 52 },
+    { key: 'pointsFor', label: 'PF', width: 40 },
+    { key: 'pointsAgainst', label: 'PA', width: 40 },
+  ],
 };
 
 // ── League grouping ───────────────────────────────────────────────────────────
 // Maps a group to a short league key used for the second row of tabs.
 // MLB: backend supplies group.league ("American League" / "National League")
 // NHL/NFL: derived from division name patterns
+// College sports (NCAAB/NCAAF): no league tabs — each group is a conference and
+// its own name is the section header.
+
+const COLLEGE_SPORTS: StandingsSportType[] = ['basketball-college', 'football-college'];
 
 function getGroupLeagueKey(group: StandingsGroup, sport: StandingsSportType): string | null {
+  if (COLLEGE_SPORTS.includes(sport)) return null;
+
   // Use backend-provided league field first (set when ESPN returns nested structure via ?level=3)
   if (group.league) {
     const l = group.league.toLowerCase();
@@ -114,15 +135,24 @@ function getGroupLeagueKey(group: StandingsGroup, sport: StandingsSportType): st
     if (n.startsWith('NFC') || n.includes('NATIONAL FOOTBALL')) return 'NFC';
   }
 
-  return null; // NCAAB — no league grouping
+  return null;
 }
 
 // Strip league prefix/suffix so headers read "East", "Atlantic", "North" etc.
 // ESPN level=3 names: "American League East", "Atlantic Division", "AFC North"
-function getDivisionLabel(name: string, sport: StandingsSportType): string {
+function getDivisionLabel(group: StandingsGroup, sport: StandingsSportType): string {
+  const name = group.name;
   if (sport === 'mlb') return name.replace(/^(American|National) League\s+/i, '');
   if (sport === 'nfl') return name.replace(/^(AFC|NFC)\s+/i, '');
   if (sport === 'nhl') return name.replace(/\s+Division$/i, '');
+  if (COLLEGE_SPORTS.includes(sport)) {
+    // Drop the redundant "Conference" suffix ("Big Ten Conference" -> "Big Ten").
+    // A few CFB conferences (e.g. Sun Belt) nest divisions, so the backend sets
+    // group.league — qualify the header so a bare "East" isn't ambiguous.
+    const division = name.replace(/\s+Conference$/i, '');
+    const conference = group.league?.replace(/\s+Conference$/i, '');
+    return conference ? `${conference} ${division}` : division;
+  }
   return name;
 }
 
@@ -327,7 +357,7 @@ export default function StandingsScreen() {
             {/* Division header */}
             <View style={styles.groupHeader}>
               <Text style={styles.groupHeaderText}>
-                {selectedSport ? getDivisionLabel(group.name, selectedSport) : group.name}
+                {selectedSport ? getDivisionLabel(group, selectedSport) : group.name}
               </Text>
             </View>
 
