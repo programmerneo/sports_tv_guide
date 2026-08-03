@@ -121,10 +121,12 @@ describe('StandingsScreen', () => {
 
     // Conference name is the section header (no league sub-tabs for college sports).
     expect(screen.getByText('Big Ten')).toBeTruthy();
-    ['W-L', 'Conf', 'PF', 'PA'].forEach((label) => {
+    ['W', 'L', 'Conf', 'PF', 'PA'].forEach((label) => {
       expect(screen.getByText(label)).toBeTruthy();
     });
-    expect(screen.getByText('11-1')).toBeTruthy();
+    // Record "11-1" is split into separate W/L cells rather than shown combined.
+    expect(screen.getByText('11')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
     expect(screen.getByText('.875')).toBeTruthy();
   });
 

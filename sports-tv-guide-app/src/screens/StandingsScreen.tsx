@@ -54,33 +54,40 @@ const TEAM_W = 120;
 const COLUMNS: Record<StandingsSportType, ColumnDef[]> = {
   nhl: [
     { key: 'gamesPlayed', label: 'GP', width: 36 },
-    { key: 'record', label: 'W-L-OT', width: 68 },
+    { key: '_wins', label: 'W', width: 32 },
+    { key: '_losses', label: 'L', width: 32 },
+    { key: '_ot', label: 'OT', width: 32 },
     { key: 'points', label: 'PTS', width: 40 },
     { key: 'pointsFor', label: 'GF', width: 36 },
     { key: 'pointsAgainst', label: 'GA', width: 36 },
   ],
   mlb: [
-    { key: 'record', label: 'W-L', width: 52 },
+    { key: '_wins', label: 'W', width: 32 },
+    { key: '_losses', label: 'L', width: 32 },
     { key: 'winPercent', label: 'PCT', width: 44 },
     { key: 'gamesBehind', label: 'GB', width: 36 },
     { key: '_home', label: 'Home', width: 52 },
     { key: '_away', label: 'Away', width: 52 },
   ],
   nfl: [
-    { key: 'record', label: 'W-L-T', width: 56 },
+    { key: '_wins', label: 'W', width: 32 },
+    { key: '_losses', label: 'L', width: 32 },
+    { key: '_ties', label: 'T', width: 32 },
     { key: 'winPercent', label: 'PCT', width: 44 },
     { key: 'pointsFor', label: 'PF', width: 36 },
     { key: 'pointsAgainst', label: 'PA', width: 36 },
   ],
   'basketball-college': [
-    { key: 'record', label: 'W-L', width: 52 },
+    { key: '_wins', label: 'W', width: 32 },
+    { key: '_losses', label: 'L', width: 32 },
     { key: 'winPercent', label: 'PCT', width: 44 },
     { key: 'leagueWinPercent', label: 'Conf', width: 52 },
   ],
   // ESPN's college football standings carry no winPercent stat, so there's no
   // PCT column here (unlike NFL); leagueWinPercent stands in as the conf figure.
   'football-college': [
-    { key: 'record', label: 'W-L', width: 52 },
+    { key: '_wins', label: 'W', width: 32 },
+    { key: '_losses', label: 'L', width: 32 },
     { key: 'leagueWinPercent', label: 'Conf', width: 52 },
     { key: 'pointsFor', label: 'PF', width: 40 },
     { key: 'pointsAgainst', label: 'PA', width: 40 },
@@ -170,6 +177,15 @@ const LEAGUE_LABELS: Record<string, string> = {
 function getCellValue(team: StandingsGroup['teams'][0], key: string): string {
   if (key === '_home') return `${team.homeWins ?? '0'}-${team.homeLosses ?? '0'}`;
   if (key === '_away') return `${team.roadWins ?? '0'}-${team.roadLosses ?? '0'}`;
+  // Records are "W-L" (MLB/NCAAB/NCAAF), "W-L-T" (NFL), or "W-L-OT" (NHL) —
+  // the backend omits the 3rd segment entirely when it's zero, so default it
+  // rather than require the backend to emit separate wins/losses/ties fields.
+  if (key === '_wins' || key === '_losses' || key === '_ties' || key === '_ot') {
+    const parts = team.record?.split('-') ?? [];
+    if (key === '_wins') return parts[0] ?? '-';
+    if (key === '_losses') return parts[1] ?? '-';
+    return parts[2] ?? '0';
+  }
   return team[key] ?? '-';
 }
 
