@@ -69,9 +69,23 @@ describe('API contract: game schema', () => {
   it('has all properties the frontend reads', () => {
     const props = getSchemaProperties(gameSchema);
     const expectedProps = [
-      'id', 'eventId', 'sport', 'homeTeam', 'awayTeam', 'status',
-      'startTime', 'endTime', 'network', 'homeScore', 'awayScore',
-      'venue', 'venueCity', 'venueState', 'quarter', 'timeRemaining', 'odds',
+      'id',
+      'eventId',
+      'sport',
+      'homeTeam',
+      'awayTeam',
+      'status',
+      'startTime',
+      'endTime',
+      'network',
+      'homeScore',
+      'awayScore',
+      'venue',
+      'venueCity',
+      'venueState',
+      'quarter',
+      'timeRemaining',
+      'odds',
     ];
     for (const prop of expectedProps) {
       expect(props).toContain(prop);
@@ -83,7 +97,7 @@ describe('API contract: game schema', () => {
     expect(required).not.toContain('homeScore');
     expect(required).not.toContain('awayScore');
 
-    const props = (gameSchema.properties as Record<string, unknown>);
+    const props = gameSchema.properties as Record<string, unknown>;
     const homeScore = props.homeScore as Record<string, unknown>;
     const anyOf = homeScore.anyOf as Array<Record<string, unknown>>;
     const types = anyOf.map((v: Record<string, unknown>) => v.type);
@@ -98,7 +112,16 @@ describe('API contract: team schema', () => {
 
   it('has all properties the frontend reads', () => {
     const props = getSchemaProperties(teamSchema);
-    const expectedProps = ['id', 'name', 'abbreviation', 'logo', 'record', 'conferenceRecord', 'conference', 'rank'];
+    const expectedProps = [
+      'id',
+      'name',
+      'abbreviation',
+      'logo',
+      'record',
+      'conferenceRecord',
+      'conference',
+      'rank',
+    ];
     for (const prop of expectedProps) {
       expect(props).toContain(prop);
     }
@@ -111,7 +134,7 @@ describe('API contract: team schema', () => {
   });
 
   it('rank is integer|null', () => {
-    const props = (teamSchema.properties as Record<string, unknown>);
+    const props = teamSchema.properties as Record<string, unknown>;
     const rank = props.rank as Record<string, unknown>;
     const anyOf = rank.anyOf as Array<Record<string, unknown>>;
     const types = anyOf.map((v: Record<string, unknown>) => v.type);
@@ -131,7 +154,7 @@ describe('API contract: odds schema', () => {
   });
 
   it('spread is number|null', () => {
-    const props = (oddsSchema.properties as Record<string, unknown>);
+    const props = oddsSchema.properties as Record<string, unknown>;
     const spread = props.spread as Record<string, unknown>;
     const anyOf = spread.anyOf as Array<Record<string, unknown>>;
     const types = anyOf.map((v: Record<string, unknown>) => v.type);
@@ -158,7 +181,7 @@ describe('API contract: bracket response schema', () => {
   });
 
   it('tabs is an array', () => {
-    const props = (bracketSchema.properties as Record<string, unknown>);
+    const props = bracketSchema.properties as Record<string, unknown>;
     const tabs = props.tabs as Record<string, unknown>;
     expect(tabs.type).toBe('array');
   });
@@ -191,9 +214,16 @@ describe('API contract: bracket game schema', () => {
   it('has all game properties the frontend reads', () => {
     const props = getSchemaProperties(gameSchema);
     const expectedProps = [
-      'contestId', 'bracketPositionId', 'gameState', 'contestClock',
-      'currentPeriod', 'hasStartTime', 'startTime', 'startTimeEpoch',
-      'teams', 'broadcaster',
+      'contestId',
+      'bracketPositionId',
+      'gameState',
+      'contestClock',
+      'currentPeriod',
+      'hasStartTime',
+      'startTime',
+      'startTimeEpoch',
+      'teams',
+      'broadcaster',
     ];
     for (const prop of expectedProps) {
       expect(props).toContain(prop);
@@ -214,14 +244,23 @@ describe('API contract: bracket team schema', () => {
 
   it('has all team properties the frontend reads', () => {
     const props = getSchemaProperties(teamSchema);
-    const expectedProps = ['isHome', 'isTop', 'isWinner', 'logoUrl', 'score', 'seed', 'nameShort', 'nameFull'];
+    const expectedProps = [
+      'isHome',
+      'isTop',
+      'isWinner',
+      'logoUrl',
+      'score',
+      'seed',
+      'nameShort',
+      'nameFull',
+    ];
     for (const prop of expectedProps) {
       expect(props).toContain(prop);
     }
   });
 
   it('score is integer|null', () => {
-    const props = (teamSchema.properties as Record<string, unknown>);
+    const props = teamSchema.properties as Record<string, unknown>;
     const score = props.score as Record<string, unknown>;
     const anyOf = score.anyOf as Array<Record<string, unknown>>;
     const types = anyOf.map((v: Record<string, unknown>) => v.type);
@@ -254,5 +293,15 @@ describe('API contract: game summary schema', () => {
     expect(required).not.toContain('startingPitchers');
     expect(required).not.toContain('plays');
     expect(required).not.toContain('leaders');
+  });
+});
+
+describe('API contract: teams response', () => {
+  const teamsSchema = (contract as Record<string, unknown>).teams as Record<string, unknown>;
+
+  it('has "sport" and "teams" properties', () => {
+    const props = getSchemaProperties(teamsSchema);
+    expect(props).toContain('sport');
+    expect(props).toContain('teams');
   });
 });

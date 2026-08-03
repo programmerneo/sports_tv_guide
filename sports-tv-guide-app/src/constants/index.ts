@@ -38,6 +38,19 @@ export const HOME_TO_STANDINGS_SPORT: Partial<Record<SportType, StandingsSportTy
   'football-college': 'football-college',
 };
 
+// The reverse of HOME_TO_STANDINGS_SPORT, covering every StandingsSportType
+// (not just the ones with a Home-screen "🏆 Standings" link) — used to
+// translate a Standings/Teams-picker sport key back to the Home-screen key
+// stored on Game.sport (e.g. so a favorited team can be matched against
+// games of that sport).
+export const STANDINGS_TO_HOME_SPORT: Record<StandingsSportType, SportType> = {
+  nhl: 'hockey-nhl',
+  mlb: 'baseball-mlb',
+  nfl: 'football-nfl',
+  'basketball-college': 'basketball-college',
+  'football-college': 'football-college',
+};
+
 export const NETWORK_LOGOS: Record<string, string> = {
   ESPN: '📺',
   'ESPN+': '📱',
@@ -64,7 +77,24 @@ export const CACHE_DURATION = {
   GAME_SUMMARY: 60 * 1000,
   STANDINGS: 5 * 60 * 1000,
   STANDINGS_STATUS: 5 * 60 * 1000,
+  TEAMS: 30 * 60 * 1000,
   PREFERENCES: 24 * 60 * 60 * 1000,
+};
+
+export const STANDINGS_SPORTS: StandingsSportType[] = [
+  'mlb',
+  'nfl',
+  'basketball-college',
+  'football-college',
+  'nhl',
+];
+
+export const SPORT_INFO: Record<StandingsSportType, { label: string; emoji: string }> = {
+  nhl: { label: 'NHL', emoji: '🏒' },
+  mlb: { label: 'MLB', emoji: '⚾' },
+  nfl: { label: 'NFL', emoji: '🏈' },
+  'basketball-college': { label: 'NCAAB', emoji: '🏀' },
+  'football-college': { label: 'NCAAF', emoji: '🏈' },
 };
 
 export const GAME_STATUS = {

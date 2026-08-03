@@ -28,6 +28,18 @@ STANDINGS_URLS: dict[str, str] = {
     "football-college": f"{ESPN_API}/football/college-football/standings",
 }
 
+# ── Teams-list endpoints ──────────────────────────────────────────────────────
+# ``?limit=999`` is required: ESPN's teams-list endpoint paginates by default
+# at a small page size and would otherwise silently truncate large sports
+# (e.g. football-college has 755 teams across FBS/FCS/D2/D3).
+TEAMS_URLS: dict[str, str] = {
+    "nfl": f"{ESPN_SITE_API}/football/nfl/teams?limit=999",
+    "mlb": f"{ESPN_SITE_API}/baseball/mlb/teams?limit=999",
+    "nhl": f"{ESPN_SITE_API}/hockey/nhl/teams?limit=999",
+    "basketball-college": f"{ESPN_SITE_API}/basketball/mens-college-basketball/teams?limit=999",
+    "football-college": f"{ESPN_SITE_API}/football/college-football/teams?limit=999",
+}
+
 # ── Standings stat fields to extract per team ─────────────────────────────────
 STANDINGS_COMMON_STATS: list[str] = [
     "wins",

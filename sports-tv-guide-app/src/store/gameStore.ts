@@ -196,6 +196,17 @@ export const useGameStore = create<GameState>()(
 );
 
 /**
+ * Build a favoriteTeams entry for a team, namespaced by sport.
+ *
+ * ESPN team ids aren't globally unique across leagues (e.g. id "1" exists in
+ * both MLB and NFL), so a bare team id can't be used as the favorite key —
+ * favoriting one sport's team would incorrectly also match another sport's
+ * team with the same id. Every read/write of favoriteTeams must go through
+ * this helper.
+ */
+export const favoriteTeamKey = (sport: SportType, teamId: string): string => `${sport}:${teamId}`;
+
+/**
  * Get games for all selected sports, sorted by time
  */
 export const getAllGames = (state: GameState): Game[] => {
@@ -244,7 +255,7 @@ export const getFavoriteGames = (state: GameState): Game[] => {
   return getAllGames(state).filter(
     (game) =>
       favoriteGames.includes(game.id) ||
-      favoriteTeams.includes(game.homeTeam.id) ||
-      favoriteTeams.includes(game.awayTeam.id)
+      favoriteTeams.includes(favoriteTeamKey(game.sport, game.homeTeam.id)) ||
+      favoriteTeams.includes(favoriteTeamKey(game.sport, game.awayTeam.id))
   );
 };

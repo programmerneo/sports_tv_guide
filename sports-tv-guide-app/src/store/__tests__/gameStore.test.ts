@@ -8,6 +8,8 @@ import {
   getLiveGames,
   getUpcomingGames,
   getGamesBySport,
+  getFavoriteGames,
+  favoriteTeamKey,
 } from '../gameStore';
 import { Game, SportType } from '@types/index';
 import { DEFAULT_USER_PREFERENCES } from '@constants/index';
@@ -249,11 +251,30 @@ describe('preferences', () => {
 
   it('toggleFavoriteTeam adds and removes', () => {
     const { toggleFavoriteTeam } = useGameStore.getState();
-    toggleFavoriteTeam('150');
-    expect(useGameStore.getState().preferences.favoriteTeams).toContain('150');
+    const key = favoriteTeamKey('basketball-college', '150');
+    toggleFavoriteTeam(key);
+    expect(useGameStore.getState().preferences.favoriteTeams).toContain(key);
 
-    toggleFavoriteTeam('150');
-    expect(useGameStore.getState().preferences.favoriteTeams).not.toContain('150');
+    toggleFavoriteTeam(key);
+    expect(useGameStore.getState().preferences.favoriteTeams).not.toContain(key);
+  });
+
+  it('getFavoriteGames does not match a same-id team from a different sport', () => {
+    // SAMPLE_SCHEDULED_GAME (basketball-college) and SAMPLE_NFL_GAME
+    // (football-nfl) share homeTeam.id "150" — ESPN team ids aren't unique
+    // across sports, so favoriting the basketball team must not also pull
+    // in the NFL game that happens to reuse that id.
+    const { setGames, toggleFavoriteTeam } = useGameStore.getState();
+    setGames('basketball-college', [SAMPLE_SCHEDULED_GAME]);
+    setGames('football-nfl', [SAMPLE_NFL_GAME]);
+    useGameStore.setState((state) => ({
+      preferences: { ...state.preferences, selectedSports: ['basketball-college', 'football-nfl'] },
+    }));
+
+    toggleFavoriteTeam(favoriteTeamKey('basketball-college', '150'));
+
+    const favorites = getFavoriteGames(useGameStore.getState());
+    expect(favorites.map((g) => g.id)).toEqual([SAMPLE_SCHEDULED_GAME.id]);
   });
 
   it('toggleFavoriteGame adds and removes', () => {

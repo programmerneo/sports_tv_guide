@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 
+import { SPORT_INFO, STANDINGS_SPORTS } from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import { apiService } from '@services/api';
@@ -25,22 +26,6 @@ import { RouteProp } from '@react-navigation/native';
 // ── Static config ─────────────────────────────────────────────────────────────
 
 type StandingsScreenRouteProp = RouteProp<{ Standings: StandingsScreenParams }, 'Standings'>;
-
-const STANDINGS_SPORTS: StandingsSportType[] = [
-  'nhl',
-  'mlb',
-  'nfl',
-  'basketball-college',
-  'football-college',
-];
-
-const SPORT_INFO: Record<StandingsSportType, { label: string; emoji: string }> = {
-  nhl: { label: 'NHL', emoji: '🏒' },
-  mlb: { label: 'MLB', emoji: '⚾' },
-  nfl: { label: 'NFL', emoji: '🏈' },
-  'basketball-college': { label: 'NCAAB', emoji: '🏀' },
-  'football-college': { label: 'NCAAF', emoji: '🏈' },
-};
 
 interface ColumnDef {
   key: string;

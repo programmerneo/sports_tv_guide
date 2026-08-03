@@ -28,6 +28,7 @@ from schemas.game import (  # noqa: E402
     ScheduleResponseSchema,
     TeamSchema,
 )
+from schemas.teams import TeamsResponseSchema  # noqa: E402
 
 # ── JSON-Schema → TypeScript type mapping ────────────────────────────────
 
@@ -136,6 +137,7 @@ def generate() -> str:
         GameSchema,
         GameSummarySchema,
         ScheduleResponseSchema,
+        TeamsResponseSchema,
     ):
         schema = cls.model_json_schema()
         for key, val in schema.get("$defs", {}).items():
@@ -148,6 +150,7 @@ def generate() -> str:
         GameSchema,
         GameSummarySchema,
         ScheduleResponseSchema,
+        TeamsResponseSchema,
     ):
         interfaces.append(_schema_to_interface(cls, all_defs))
 
@@ -167,13 +170,7 @@ def main() -> None:
     """Write generated types to the frontend source directory."""
     output = generate()
 
-    out_path = (
-        PROJECT_ROOT
-        / "sports-tv-guide-app"
-        / "src"
-        / "types"
-        / "generated-api-types.ts"
-    )
+    out_path = PROJECT_ROOT / "sports-tv-guide-app" / "src" / "types" / "generated-api-types.ts"
     out_path.write_text(output)
     print(f"Generated {out_path.relative_to(PROJECT_ROOT)}")
 
@@ -186,6 +183,7 @@ def main() -> None:
         "team": TeamSchema.model_json_schema(),
         "odds": OddsSchema.model_json_schema(),
         "bracket": BracketResponseSchema.model_json_schema(),
+        "teams": TeamsResponseSchema.model_json_schema(),
     }
     json_schema_path.write_text(json.dumps(contract, indent=2) + "\n")
     print(f"Generated {json_schema_path.relative_to(PROJECT_ROOT)}")

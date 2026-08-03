@@ -8,20 +8,20 @@ the frontend.
 
 from __future__ import annotations
 
-from pydantic import ValidationError
 import pytest
-
-from schemas.game import GameSchema, GameSummarySchema, ScheduleResponseSchema
+from pydantic import ValidationError
+from schemas.game import GameSchema, GameSummarySchema, ScheduleResponseSchema, TeamSchema
+from schemas.teams import TeamsResponseSchema
 from services.game_espn_service import GameService
 from services.scoreboard_espn_service import ScoreboardService
+from services.teams_service import TeamsService
+
 from tests.fixtures.espn_data import SAMPLE_ESPN_SCOREBOARD, SAMPLE_ESPN_SUMMARY
 
 
 def test_scoreboard_output_validates_against_game_schema():
     """format_events output must parse into GameSchema without errors."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     assert len(games) > 0
 
     for game_dict in games:
@@ -36,9 +36,7 @@ def test_scoreboard_output_validates_against_game_schema():
 
 def test_scoreboard_output_validates_as_schedule_response():
     """fetch_and_format wraps games in {games: [...]}, matching ScheduleResponseSchema."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     response = {"games": games}
 
     schedule = ScheduleResponseSchema(**response)
@@ -51,9 +49,7 @@ def test_scoreboard_output_validates_as_schedule_response():
 
 def test_game_summary_output_validates_against_schema():
     """_format_summary output must parse into GameSummarySchema."""
-    summary_dict = GameService._format_summary(
-        SAMPLE_ESPN_SUMMARY, "basketball-college"
-    )
+    summary_dict = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
 
     summary = GameSummarySchema(**summary_dict)
     serialized = summary.model_dump(by_alias=True)
@@ -65,9 +61,7 @@ def test_game_summary_output_validates_against_schema():
 
 def test_required_fields_present_in_scoreboard_output():
     """All required GameSchema fields must be non-None in scoreboard output."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     game = GameSchema(**games[0])
 
     # Required fields (no default)
@@ -83,9 +77,7 @@ def test_required_fields_present_in_scoreboard_output():
 
 def test_required_fields_present_in_game_summary_output():
     """All required GameSummarySchema fields must be non-None."""
-    summary_dict = GameService._format_summary(
-        SAMPLE_ESPN_SUMMARY, "basketball-college"
-    )
+    summary_dict = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
     summary = GameSummarySchema(**summary_dict)
 
     assert summary.id != ""
@@ -96,9 +88,7 @@ def test_required_fields_present_in_game_summary_output():
 
 def test_venue_fields_in_scoreboard_output():
     """Venue city and state must be extracted when present."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     game = GameSchema(**games[0])
 
     assert game.venue is not None
@@ -108,9 +98,7 @@ def test_venue_fields_in_scoreboard_output():
 
 def test_venue_fields_in_game_summary_output():
     """Venue city and state must be extracted from game summary."""
-    summary_dict = GameService._format_summary(
-        SAMPLE_ESPN_SUMMARY, "basketball-college"
-    )
+    summary_dict = GameService._format_summary(SAMPLE_ESPN_SUMMARY, "basketball-college")
     summary = GameSummarySchema(**summary_dict)
 
     assert summary.venue is not None
@@ -120,9 +108,7 @@ def test_venue_fields_in_game_summary_output():
 
 def test_odds_fields_in_scoreboard_output():
     """Odds must parse correctly when present."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     game = GameSchema(**games[0])
 
     assert game.odds is not None
@@ -160,9 +146,7 @@ def test_empty_scoreboard_produces_empty_schedule():
 
 def test_camel_case_serialization_matches_frontend_keys():
     """Serialized output keys must match what the frontend expects."""
-    games = ScoreboardService.format_events(
-        SAMPLE_ESPN_SCOREBOARD, "basketball-college"
-    )
+    games = ScoreboardService.format_events(SAMPLE_ESPN_SCOREBOARD, "basketball-college")
     game = GameSchema(**games[0])
     serialized = game.model_dump(by_alias=True)
 
@@ -204,3 +188,25 @@ def test_camel_case_serialization_matches_frontend_keys():
     }
     assert team_keys == set(serialized["homeTeam"].keys())
     assert team_keys == set(serialized["awayTeam"].keys())
+
+
+def test_teams_output_validates_against_team_and_teams_response_schema():
+    """TeamsService's formatted output must parse into TeamSchema and
+    TeamsResponseSchema without errors.
+    """
+    nfl_team = TeamsService._format_team(
+        {"id": "22", "displayName": "Arizona Cardinals", "abbreviation": "ARI", "logos": []},
+        "nfl",
+    )
+    college_team = TeamsService._format_team(
+        {"id": "150", "displayName": "Duke Blue Devils", "abbreviation": "DUKE", "logos": []},
+        "basketball-college",
+        {"150": "ACC"},
+    )
+
+    for team_dict in (nfl_team, college_team):
+        team = TeamSchema(**team_dict)
+        assert team.name == team_dict["name"]
+
+    response = TeamsResponseSchema(sport="basketball-college", teams=[college_team])
+    assert response.teams[0].conference == "ACC"

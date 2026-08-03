@@ -678,3 +678,108 @@ SAMPLE_ESPN_STANDINGS_CFB = {
         },
     ],
 }
+
+# ── Teams-list fixtures ──────────────────────────────────────────────────────
+# Mirrors the real shape of ESPN's bulk teams-list endpoint
+# (site.api.espn.com/.../teams?limit=999): sports[0].leagues[0].teams[].team.
+# Verified empirically that this team object carries no conference info at
+# all (no ``groups``, no ``conferenceId``) — conference for college sports
+# comes from a separate standings lookup, see SAMPLE_ESPN_STANDINGS_TEAMS_*
+# below.
+
+SAMPLE_ESPN_TEAMS_NFL = {
+    "sports": [
+        {
+            "leagues": [
+                {
+                    "teams": [
+                        {
+                            "team": {
+                                "id": "22",
+                                "displayName": "Arizona Cardinals",
+                                "abbreviation": "ARI",
+                                "logos": [{"href": "https://example.com/ari.png"}],
+                            }
+                        },
+                        {
+                            "team": {
+                                "id": "33",
+                                "displayName": "Baltimore Ravens",
+                                "abbreviation": "BAL",
+                                "logos": [{"href": "https://example.com/bal.png"}],
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
+SAMPLE_ESPN_TEAMS_CFB = {
+    "sports": [
+        {
+            "leagues": [
+                {
+                    "teams": [
+                        {
+                            "team": {
+                                "id": "150",
+                                "displayName": "Duke Blue Devils",
+                                "abbreviation": "DUKE",
+                                "logos": [{"href": "https://example.com/duke.png"}],
+                            }
+                        },
+                        {
+                            "team": {
+                                "id": "2390",
+                                "displayName": "Miami Hurricanes",
+                                "abbreviation": "MIA",
+                                "logos": [{"href": "https://example.com/mia.png"}],
+                            }
+                        },
+                    ]
+                }
+            ]
+        }
+    ]
+}
+
+# Standings response used to build the team-id -> conference map for
+# basketball-college. Its conference group ``id`` (2) matches
+# CONFERENCE_SHORT_NAMES["2"] == "ACC" (verified against the live endpoint).
+SAMPLE_ESPN_STANDINGS_TEAMS_BASKETBALL_COLLEGE = {
+    "name": "NCAA Men's Basketball",
+    "children": [
+        {
+            "id": "2",
+            "name": "Atlantic Coast Conference",
+            "abbreviation": "acc",
+            "standings": {
+                "entries": [
+                    {"team": {"id": "150", "displayName": "Duke Blue Devils"}},
+                ]
+            },
+        },
+    ],
+}
+
+# Standings response for football-college. Its conference group ``id`` (1)
+# does NOT match CONFERENCE_SHORT_NAMES (which is keyed off basketball's id
+# scheme) — verified football-college's standings ids are a different
+# namespace — so conference resolution falls back to the group's own name.
+SAMPLE_ESPN_STANDINGS_TEAMS_FOOTBALL_COLLEGE = {
+    "name": "FBS",
+    "children": [
+        {
+            "id": "1",
+            "name": "Atlantic Coast Conference",
+            "abbreviation": "acc",
+            "standings": {
+                "entries": [
+                    {"team": {"id": "2390", "displayName": "Miami Hurricanes"}},
+                ]
+            },
+        },
+    ],
+}

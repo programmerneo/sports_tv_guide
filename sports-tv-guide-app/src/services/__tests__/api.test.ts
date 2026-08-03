@@ -371,6 +371,35 @@ describe('getStandings', () => {
   });
 });
 
+describe('getTeams', () => {
+  it('returns teams from backend response', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        sport: 'nhl',
+        teams: [{ id: '1', name: 'Boston Bruins', abbreviation: 'BOS' }],
+      }),
+      text: async () => '',
+    });
+
+    const result = await apiService.getTeams('nhl');
+
+    expect(result.sport).toBe('nhl');
+    expect(result.teams).toHaveLength(1);
+    expect(result.teams[0].abbreviation).toBe('BOS');
+  });
+
+  it('throws on HTTP error', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    });
+
+    await expect(apiService.getTeams('nfl')).rejects.toThrow('HTTP 500');
+  });
+});
+
 describe('getStandingsStatus', () => {
   it('returns the inSeason flag from backend response', async () => {
     mockFetch.mockResolvedValueOnce({

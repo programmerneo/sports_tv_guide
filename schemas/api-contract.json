@@ -1598,5 +1598,130 @@
     },
     "title": "BracketResponseSchema",
     "type": "object"
+  },
+  "teams": {
+    "$defs": {
+      "TeamSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "abbreviation": {
+            "title": "Abbreviation",
+            "type": "string"
+          },
+          "logo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Logo"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Color"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Record"
+          },
+          "conferenceRecord": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conferencerecord"
+          },
+          "conference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Conference"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Rank"
+          }
+        },
+        "required": [
+          "name",
+          "abbreviation"
+        ],
+        "title": "TeamSchema",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "sport": {
+        "title": "Sport",
+        "type": "string"
+      },
+      "teams": {
+        "items": {
+          "$ref": "#/$defs/TeamSchema"
+        },
+        "title": "Teams",
+        "type": "array"
+      }
+    },
+    "required": [
+      "sport",
+      "teams"
+    ],
+    "title": "TeamsResponseSchema",
+    "type": "object"
   }
 }

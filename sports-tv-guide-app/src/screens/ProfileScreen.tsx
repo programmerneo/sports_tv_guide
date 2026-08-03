@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, Switch } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 import { useGameStore } from '@store/gameStore';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,6 +11,7 @@ import { cancelGameReminder } from '@services/notificationService';
 export default function ProfileScreen() {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
+  const navigation = useNavigation();
 
   const darkModeEnabled = useGameStore((state) => state.preferences.darkModeEnabled);
   const notificationsEnabled = useGameStore((state) => state.preferences.notificationsEnabled);
@@ -30,6 +32,14 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.headerBar}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.navigate('Home' as never)}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.backButtonText}>← Home</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
       </View>
 
@@ -47,6 +57,20 @@ export default function ProfileScreen() {
             thumbColor={theme.surface}
           />
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Teams</Text>
+        <TouchableOpacity
+          style={styles.row}
+          onPress={() => navigation.navigate('ManageTeams' as never)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.rowLabelGroup}>
+            <Text style={styles.rowLabel}>Favorite Teams</Text>
+          </View>
+          <Text style={styles.rowChevron}>›</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
@@ -80,6 +104,15 @@ const createStyles = (theme: ThemeColors) =>
       backgroundColor: theme.headerBg,
       paddingHorizontal: 16,
       paddingVertical: 12,
+      gap: 12,
+    },
+    backButton: {
+      padding: 4,
+    },
+    backButtonText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: theme.textInverse,
     },
     headerTitle: {
       fontSize: 20,
@@ -127,5 +160,10 @@ const createStyles = (theme: ThemeColors) =>
       fontSize: 12,
       color: theme.textSecondary,
       marginTop: 2,
+    },
+    rowChevron: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: theme.textSecondary,
     },
   });

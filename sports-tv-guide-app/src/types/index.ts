@@ -269,3 +269,8 @@ export interface StandingsResponse {
   season: string;
   groups: StandingsGroup[];
 }
+
+export interface TeamsResponse {
+  sport: StandingsSportType;
+  teams: Team[];
+}

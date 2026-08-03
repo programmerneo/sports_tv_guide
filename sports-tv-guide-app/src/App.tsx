@@ -15,6 +15,7 @@ import StandingsScreen from '@screens/StandingsScreen';
 import FavoritesScreen from '@screens/FavoritesScreen';
 import NotificationsScreen from '@screens/NotificationsScreen';
 import ProfileScreen from '@screens/ProfileScreen';
+import ManageTeamsScreen from '@screens/ManageTeamsScreen';
 
 import { useGameStore, getAllGames } from '@store/gameStore';
 import { useTheme } from '@/hooks/useTheme';
@@ -196,6 +197,7 @@ export default function App() {
           }}
         >
           <Stack.Screen name="MainTabs" component={BottomTabs} />
+          <Stack.Screen name="ManageTeams" component={ManageTeamsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
       <StatusBar style={preferences.darkModeEnabled ? 'light' : 'dark'} />

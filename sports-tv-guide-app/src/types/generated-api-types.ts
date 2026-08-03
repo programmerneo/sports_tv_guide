@@ -74,3 +74,8 @@ export interface GameSummarySchema {
 export interface ScheduleResponseSchema {
   games: GameSchema[];
 }
+
+export interface TeamsResponseSchema {
+  sport: string;
+  teams: TeamSchema[];
+}

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
-import { useGameStore, getUpcomingGames, getLiveGames } from '@store/gameStore';
+import { useGameStore, getUpcomingGames, getLiveGames, favoriteTeamKey } from '@store/gameStore';
 import { Game } from '@types/index';
 import { SPORTS } from '@constants/index';
 import { useTheme } from '@/hooks/useTheme';
@@ -48,8 +48,8 @@ export default function NotificationsScreen() {
 
     const isFavoriteGame = (game: Game): boolean =>
       favoriteGames.includes(game.id) ||
-      favoriteTeams.includes(game.homeTeam.id) ||
-      favoriteTeams.includes(game.awayTeam.id);
+      favoriteTeams.includes(favoriteTeamKey(game.sport, game.homeTeam.id)) ||
+      favoriteTeams.includes(favoriteTeamKey(game.sport, game.awayTeam.id));
 
     const toReminder = (game: Game): Reminder => {
       const emoji = SPORTS[game.sport]?.emoji || '🔔';

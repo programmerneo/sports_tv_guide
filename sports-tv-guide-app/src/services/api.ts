@@ -11,6 +11,7 @@ import {
   SportType,
   StandingsResponse,
   StandingsSportType,
+  TeamsResponse,
 } from '@types/index';
 
 interface CacheEntry<T> {
@@ -222,6 +223,27 @@ class ApiService {
       return data;
     } catch (error) {
       console.error(`Failed to fetch ${sport} standings:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch the manageable team list for a sport
+   */
+  async getTeams(sport: StandingsSportType): Promise<TeamsResponse> {
+    const cacheKey = `teams:${sport}`;
+
+    const cached = this.getCachedData<TeamsResponse>(cacheKey, CacheDuration.TEAMS);
+    if (cached) return cached;
+
+    try {
+      const url = `${API_BASE_URL}/api/teams/${sport}`;
+      const response = await this.fetchWithTimeout(url);
+      const data: TeamsResponse = await response.json();
+      this.setCacheData(cacheKey, data);
+      return data;
+    } catch (error) {
+      console.error(`Failed to fetch ${sport} teams:`, error);
       throw error;
     }
   }
