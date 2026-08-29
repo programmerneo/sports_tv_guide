@@ -191,6 +191,20 @@ export const useGameStore = create<GameState>()(
         preferences: state.preferences,
         scheduledReminders: state.scheduledReminders,
       }),
+      // v1: football-college joined DEFAULT_USER_PREFERENCES.selectedSports after
+      // this store shipped, but persisted preferences replace the default wholesale
+      // on rehydrate — existing installs need it appended explicitly, once.
+      version: 1,
+      migrate: (persistedState, version) => {
+        const state = persistedState as { preferences?: UserPreferences };
+        if (version < 1 && state?.preferences && !state.preferences.selectedSports.includes('football-college')) {
+          state.preferences = {
+            ...state.preferences,
+            selectedSports: [...state.preferences.selectedSports, 'football-college'],
+          };
+        }
+        return state;
+      },
     }
   )
 );
