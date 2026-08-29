@@ -34,3 +34,6 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code personal overrides
+.claude/settings.local.json
