@@ -1,0 +1,15 @@
+{
+  "sport": "nfl",
+  "teams": [
+    {
+      "id": "22",
+      "name": "Arizona Cardinals",
+      "abbreviation": "ARI"
+    },
+    {
+      "id": "12",
+      "name": "Kansas City Chiefs",
+      "abbreviation": "KC"
+    }
+  ]
+}

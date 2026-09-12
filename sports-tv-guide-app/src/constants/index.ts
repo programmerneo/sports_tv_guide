@@ -51,6 +51,10 @@ export const STANDINGS_TO_HOME_SPORT: Record<StandingsSportType, SportType> = {
   'football-college': 'football-college',
 };
 
+// National broadcast networks (vs. cable/streaming-only), used to bump a
+// game's priority when a time slot has more games than the grid can show.
+export const NATIONAL_BROADCAST_NETWORKS = new Set(['ABC', 'CBS', 'NBC', 'FOX', 'ESPN']);
+
 export const NETWORK_LOGOS: Record<string, string> = {
   ESPN: '📺',
   'ESPN+': '📱',

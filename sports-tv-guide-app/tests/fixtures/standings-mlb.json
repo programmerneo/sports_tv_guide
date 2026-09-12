@@ -1,0 +1,60 @@
+{
+  "sport": "mlb",
+  "league": "Major League Baseball",
+  "season": "2026",
+  "groups": [
+    {
+      "name": "American League East",
+      "abbreviation": "ALE",
+      "league": "American League",
+      "teams": [
+        {
+          "team": "New York Yankees",
+          "shortName": "Yankees",
+          "abbreviation": "NYY",
+          "logo": "",
+          "record": "95-67",
+          "winPercent": ".586",
+          "gamesBehind": "-",
+          "homeWins": "52",
+          "homeLosses": "29",
+          "roadWins": "43",
+          "roadLosses": "38"
+        },
+        {
+          "team": "Boston Red Sox",
+          "shortName": "Red Sox",
+          "abbreviation": "BOS",
+          "logo": "",
+          "record": "88-74",
+          "winPercent": ".543",
+          "gamesBehind": "7",
+          "homeWins": "47",
+          "homeLosses": "34",
+          "roadWins": "41",
+          "roadLosses": "40"
+        }
+      ]
+    },
+    {
+      "name": "National League West",
+      "abbreviation": "NLW",
+      "league": "National League",
+      "teams": [
+        {
+          "team": "Los Angeles Dodgers",
+          "shortName": "Dodgers",
+          "abbreviation": "LAD",
+          "logo": "",
+          "record": "98-64",
+          "winPercent": ".605",
+          "gamesBehind": "-",
+          "homeWins": "54",
+          "homeLosses": "27",
+          "roadWins": "44",
+          "roadLosses": "37"
+        }
+      ]
+    }
+  ]
+}

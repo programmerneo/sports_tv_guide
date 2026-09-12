@@ -1,0 +1,51 @@
+{
+  "sport": "football-college",
+  "league": "NCAA Football",
+  "season": "2026",
+  "groups": [
+    {
+      "name": "Big Ten Conference",
+      "abbreviation": "B1G",
+      "league": null,
+      "teams": [
+        {
+          "team": "Ohio State Buckeyes",
+          "shortName": "Ohio State",
+          "abbreviation": "OSU",
+          "logo": "",
+          "record": "11-1",
+          "leagueWinPercent": ".875",
+          "pointsFor": "480",
+          "pointsAgainst": "210"
+        },
+        {
+          "team": "Michigan Wolverines",
+          "shortName": "Michigan",
+          "abbreviation": "MICH",
+          "logo": "",
+          "record": "10-2",
+          "leagueWinPercent": ".750",
+          "pointsFor": "410",
+          "pointsAgainst": "230"
+        }
+      ]
+    },
+    {
+      "name": "SEC Conference",
+      "abbreviation": "SEC",
+      "league": null,
+      "teams": [
+        {
+          "team": "Georgia Bulldogs",
+          "shortName": "Georgia",
+          "abbreviation": "UGA",
+          "logo": "",
+          "record": "12-0",
+          "leagueWinPercent": "1.000",
+          "pointsFor": "500",
+          "pointsAgainst": "150"
+        }
+      ]
+    }
+  ]
+}

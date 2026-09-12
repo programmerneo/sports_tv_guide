@@ -11,25 +11,58 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   Image,
+  Modal,
 } from 'react-native';
 
 import { Game } from '@types/index';
-import { SPORTS, TIME_SLOTS } from '@constants/index';
+import { NATIONAL_BROADCAST_NETWORKS, SPORTS, TIME_SLOTS } from '@constants/index';
 import { ThemeColors } from '@constants/theme';
 import { useTheme } from '@/hooks/useTheme';
 import BoxScoreModal from './BoxScoreModal';
 
 const HEADER_HEIGHT = 50;
 const SCROLL_HINT_HEIGHT = 30;
+const MAX_VISIBLE_GAMES_PER_SLOT = 3;
 
 interface TVGuideGridProps {
   games: Game[];
 }
 
+const parseWins = (record?: string): number => {
+  const match = record?.match(/^(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+};
+
+const gameMinRank = (game: Game): number =>
+  Math.min(game.homeTeam.rank ?? Infinity, game.awayTeam.rank ?? Infinity);
+
+const broadcastTier = (network: string): number =>
+  NATIONAL_BROADCAST_NETWORKS.has(network.toUpperCase()) ? 0 : 1;
+
+const combinedWins = (game: Game): number =>
+  parseWins(game.homeTeam.record) + parseWins(game.awayTeam.record);
+
+/**
+ * Order games within a single slot/sport cell: national broadcast (ABC/CBS/
+ * NBC/FOX/ESPN) over cable/streaming first, then best rank, then combined
+ * win total as a tiebreaker -- so when a slot has more games than the grid
+ * can show (e.g. NCAAF's noon-ET slot), the most notable ones survive the cut.
+ */
+const compareGamePopularity = (a: Game, b: Game): number => {
+  const tierDiff = broadcastTier(a.network) - broadcastTier(b.network);
+  if (tierDiff !== 0) return tierDiff;
+
+  const rankDiff = gameMinRank(a) - gameMinRank(b);
+  if (rankDiff !== 0) return rankDiff;
+
+  return combinedWins(b) - combinedWins(a);
+};
+
 const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [expandedSlot, setExpandedSlot] = useState<{ sport: string; slot: string } | null>(null);
   const verticalScrollRef = useRef<ScrollView>(null);
   const hasScrolled = useRef(false);
 
@@ -81,7 +114,9 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
    * Get games for a specific sport and time slot
    */
   const getGamesForSlot = (sport: string, timeSlot: string): Game[] => {
-    return games.filter((g) => getColumnSport(g.sport) === sport && getTimeSlot(g) === timeSlot);
+    return games
+      .filter((g) => getColumnSport(g.sport) === sport && getTimeSlot(g) === timeSlot)
+      .sort(compareGamePopularity);
   };
 
   /**
@@ -176,6 +211,8 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
               {/* Game cells for each sport */}
               {sports.map((sport) => {
                 const slotsGames = getGamesForSlot(sport, slot);
+                const visibleGames = slotsGames.slice(0, MAX_VISIBLE_GAMES_PER_SLOT);
+                const overflowCount = slotsGames.length - visibleGames.length;
 
                 return (
                   <View
@@ -183,12 +220,12 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
                     style={[
                       styles.gameCell,
                       { width: columnWidth },
-                      slotsGames.length > 0 && styles.gameCellWithContent,
+                      slotsGames.length > 0 ? styles.gameCellWithContent : styles.gameCellEmpty,
                     ]}
                   >
                     {slotsGames.length > 0 ? (
                       <View style={styles.gameContent}>
-                        {slotsGames.slice(0, 2).map((game) => {
+                        {visibleGames.map((game) => {
                           const gameTime = new Date(game.startTime).toLocaleTimeString([], {
                             hour: 'numeric',
                             minute: '2-digit',
@@ -288,6 +325,15 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
                             </TouchableOpacity>
                           );
                         })}
+                        {overflowCount > 0 && (
+                          <TouchableOpacity
+                            style={styles.moreGamesPill}
+                            onPress={() => setExpandedSlot({ sport, slot })}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.moreGamesText}>+{overflowCount} more</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
                     ) : (
                       <Text style={styles.emptyCell}>-</Text>
@@ -315,6 +361,50 @@ const TVGuideGrid: React.FC<TVGuideGridProps> = ({ games }) => {
           onClose={() => setSelectedGame(null)}
         />
       )}
+
+      {/* "+N more" overflow list for a busy slot/sport cell */}
+      <Modal
+        visible={!!expandedSlot}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setExpandedSlot(null)}
+      >
+        <TouchableOpacity
+          style={styles.expandedOverlay}
+          activeOpacity={1}
+          onPress={() => setExpandedSlot(null)}
+        >
+          <TouchableOpacity style={styles.expandedSheet} activeOpacity={1}>
+            <View style={styles.expandedHeader}>
+              <Text style={styles.expandedTitle}>
+                {expandedSlot &&
+                  `${SPORTS[expandedSlot.sport as keyof typeof SPORTS]?.displayName ?? ''} · ${expandedSlot.slot}`}
+              </Text>
+              <TouchableOpacity onPress={() => setExpandedSlot(null)} hitSlop={8}>
+                <Text style={styles.expandedClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.expandedList}>
+              {expandedSlot &&
+                getGamesForSlot(expandedSlot.sport, expandedSlot.slot).map((game) => (
+                  <TouchableOpacity
+                    key={game.id}
+                    style={styles.expandedRow}
+                    onPress={() => {
+                      setExpandedSlot(null);
+                      setSelectedGame(game);
+                    }}
+                  >
+                    <Text style={styles.expandedRowText} numberOfLines={1}>
+                      {game.awayTeam.abbreviation} @ {game.homeTeam.abbreviation}
+                    </Text>
+                    <Text style={styles.expandedRowNetwork}>{game.network}</Text>
+                  </TouchableOpacity>
+                ))}
+            </ScrollView>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </>
   );
 };
@@ -383,6 +473,9 @@ const createStyles = (theme: ThemeColors) =>
     },
     gameCellWithContent: {
       backgroundColor: theme.surfaceAlt,
+    },
+    gameCellEmpty: {
+      backgroundColor: theme.background,
     },
     gameContent: {
       width: '100%',
@@ -485,7 +578,7 @@ const createStyles = (theme: ThemeColors) =>
     },
     emptyCell: {
       fontSize: 12,
-      color: theme.textSecondary,
+      color: 'transparent',
       fontWeight: '300',
     },
     scrollHint: {
@@ -505,6 +598,76 @@ const createStyles = (theme: ThemeColors) =>
     },
     scrollHintArrow: {
       fontSize: 10,
+      color: theme.textSecondary,
+    },
+    moreGamesPill: {
+      alignSelf: 'center',
+      backgroundColor: theme.primary,
+      paddingHorizontal: 6,
+      paddingVertical: 2,
+      borderRadius: 8,
+      marginTop: 2,
+    },
+    moreGamesText: {
+      fontSize: 9,
+      fontWeight: '600',
+      color: theme.textInverse,
+    },
+    expandedOverlay: {
+      flex: 1,
+      backgroundColor: theme.overlay,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    expandedSheet: {
+      width: '100%',
+      maxWidth: 360,
+      maxHeight: '70%',
+      backgroundColor: theme.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: theme.border,
+      overflow: 'hidden',
+    },
+    expandedHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      backgroundColor: theme.primary,
+      paddingHorizontal: 14,
+      paddingVertical: 12,
+    },
+    expandedTitle: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: theme.textInverse,
+    },
+    expandedClose: {
+      fontSize: 16,
+      color: theme.textInverse,
+    },
+    expandedList: {
+      maxHeight: 320,
+    },
+    expandedRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.border,
+    },
+    expandedRowText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: theme.text,
+      flex: 1,
+      marginRight: 8,
+    },
+    expandedRowNetwork: {
+      fontSize: 11,
       color: theme.textSecondary,
     },
   });

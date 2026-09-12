@@ -431,11 +431,36 @@ SPORTS: {
 
 ## 🧪 Testing
 
+### Unit Tests
+
 ```bash
 npm test
 ```
 
 Tests use Jest and React Testing Library. Add tests to `src/**/__tests__/` directories.
+
+### End-to-End Tests
+
+```bash
+npm run test:e2e
+```
+
+E2E tests use [Playwright](https://playwright.dev/) and live in [`tests/`](./tests) (one spec file per screen: `tv-guide-grid`, `standings`, `manage-teams`, `notifications`, `favorites`, `bracket`, `profile`). They drive the real Expo **web** build in a real browser, but never touch the actual FastAPI backend — each test mocks the API responses it needs with `page.route(...).fulfill(...)`, using fixture JSON under [`tests/fixtures/`](./tests/fixtures). This keeps them fast and deterministic (no live ESPN data, no backend process required).
+
+`npx playwright test` (what `test:e2e` runs) automatically starts its own Expo web server on port 8081 per [`playwright.config.ts`](./playwright.config.ts) — you don't need `npx expo start` running first. First time only, install the browser binary:
+
+```bash
+npx playwright install chromium
+```
+
+Useful variants:
+```bash
+npx playwright test tests/tv-guide-grid.spec.ts   # run a single spec file
+npx playwright test --ui                          # interactive UI mode
+npx playwright show-report                        # view the HTML report from the last run
+```
+
+Add new spec files directly under `tests/` (e.g. `tests/my-screen.spec.ts`) — Playwright picks up any `*.spec.ts` file there automatically; no config changes needed. Follow the pattern in `tests/tv-guide-grid.spec.ts` (route mocking + fixtures) rather than hitting the real backend.
 
 ---
 

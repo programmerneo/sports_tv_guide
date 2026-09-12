@@ -1,0 +1,23 @@
+{
+  "sport": "football-college",
+  "teams": [
+    {
+      "id": "130",
+      "name": "Michigan Wolverines",
+      "abbreviation": "MICH",
+      "conference": "Big Ten"
+    },
+    {
+      "id": "194",
+      "name": "Ohio State Buckeyes",
+      "abbreviation": "OSU",
+      "conference": "Big Ten"
+    },
+    {
+      "id": "61",
+      "name": "Georgia Bulldogs",
+      "abbreviation": "UGA",
+      "conference": "SEC"
+    }
+  ]
+}

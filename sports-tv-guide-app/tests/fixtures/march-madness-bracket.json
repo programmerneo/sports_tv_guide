@@ -1,0 +1,143 @@
+{
+  "title": "NCAA March Madness",
+  "year": 2026,
+  "championshipInfo": null,
+  "defaultTabSectionId": 10,
+  "tabs": [
+    {
+      "sectionId": 10,
+      "label": "South",
+      "regionCode": "SO",
+      "isEnabled": true,
+      "liveCount": 0,
+      "rounds": [
+        {
+          "label": "Round 1",
+          "subtitle": "",
+          "games": [
+            {
+              "contestId": 1001,
+              "bracketPositionId": 1,
+              "contestClock": "",
+              "currentPeriod": "",
+              "gameState": "F",
+              "hasStartTime": true,
+              "startTime": "7:09 PM ET",
+              "startTimeEpoch": 0,
+              "teams": [
+                {
+                  "isHome": false,
+                  "isTop": true,
+                  "isWinner": true,
+                  "logoUrl": "",
+                  "score": 78,
+                  "seed": 1,
+                  "nameShort": "DUKE",
+                  "nameFull": "Duke Blue Devils"
+                },
+                {
+                  "isHome": true,
+                  "isTop": false,
+                  "isWinner": false,
+                  "logoUrl": "",
+                  "score": 65,
+                  "seed": 16,
+                  "nameShort": "MSM",
+                  "nameFull": "Mount St. Mary's"
+                }
+              ],
+              "broadcaster": { "name": "TBS" }
+            }
+          ]
+        },
+        {
+          "label": "Round 2",
+          "subtitle": "",
+          "games": [
+            {
+              "contestId": 1002,
+              "bracketPositionId": 2,
+              "contestClock": "",
+              "currentPeriod": "",
+              "gameState": "P",
+              "hasStartTime": true,
+              "startTime": "9:39 PM ET",
+              "startTimeEpoch": 0,
+              "teams": [
+                {
+                  "isHome": false,
+                  "isTop": true,
+                  "isWinner": false,
+                  "logoUrl": "",
+                  "score": null,
+                  "seed": 1,
+                  "nameShort": "DUKE",
+                  "nameFull": "Duke Blue Devils"
+                },
+                {
+                  "isHome": true,
+                  "isTop": false,
+                  "isWinner": false,
+                  "logoUrl": "",
+                  "score": null,
+                  "seed": 8,
+                  "nameShort": "ARIZ",
+                  "nameFull": "Arizona Wildcats"
+                }
+              ],
+              "broadcaster": { "name": "CBS" }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "sectionId": 20,
+      "label": "East",
+      "regionCode": "EA",
+      "isEnabled": true,
+      "liveCount": 1,
+      "rounds": [
+        {
+          "label": "Round 1",
+          "subtitle": "",
+          "games": [
+            {
+              "contestId": 2001,
+              "bracketPositionId": 1,
+              "contestClock": "8:42 2nd",
+              "currentPeriod": "2nd",
+              "gameState": "I",
+              "hasStartTime": true,
+              "startTime": "",
+              "startTimeEpoch": 0,
+              "teams": [
+                {
+                  "isHome": false,
+                  "isTop": true,
+                  "isWinner": false,
+                  "logoUrl": "",
+                  "score": 41,
+                  "seed": 4,
+                  "nameShort": "AUB",
+                  "nameFull": "Auburn Tigers"
+                },
+                {
+                  "isHome": true,
+                  "isTop": false,
+                  "isWinner": false,
+                  "logoUrl": "",
+                  "score": 38,
+                  "seed": 13,
+                  "nameShort": "YALE",
+                  "nameFull": "Yale Bulldogs"
+                }
+              ],
+              "broadcaster": { "name": "ESPN" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

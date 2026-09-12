@@ -1,0 +1,15 @@
+{
+  "sport": "mlb",
+  "teams": [
+    {
+      "id": "22",
+      "name": "Arizona Diamondbacks",
+      "abbreviation": "ARI"
+    },
+    {
+      "id": "19",
+      "name": "Los Angeles Dodgers",
+      "abbreviation": "LAD"
+    }
+  ]
+}

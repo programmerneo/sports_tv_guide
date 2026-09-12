@@ -1,0 +1,43 @@
+{
+  "sport": "nhl",
+  "league": "National Hockey League",
+  "season": "2026",
+  "groups": [
+    {
+      "name": "Atlantic Division",
+      "abbreviation": "ATL",
+      "league": null,
+      "teams": [
+        {
+          "team": "Boston Bruins",
+          "shortName": "Bruins",
+          "abbreviation": "BOS",
+          "logo": "",
+          "record": "48-24-10",
+          "gamesPlayed": "82",
+          "points": "106",
+          "pointsFor": "260",
+          "pointsAgainst": "205"
+        }
+      ]
+    },
+    {
+      "name": "Central Division",
+      "abbreviation": "CEN",
+      "league": null,
+      "teams": [
+        {
+          "team": "Colorado Avalanche",
+          "shortName": "Avalanche",
+          "abbreviation": "COL",
+          "logo": "",
+          "record": "50-22-10",
+          "gamesPlayed": "82",
+          "points": "110",
+          "pointsFor": "270",
+          "pointsAgainst": "210"
+        }
+      ]
+    }
+  ]
+}

@@ -258,7 +258,7 @@ Remaining:
 ### Testing
 - [ ] Add unit tests for utils
 - [ ] Add integration tests
-- [ ] Add E2E tests
+- [x] Add E2E tests
 - [ ] Improve test coverage
 
 ### Documentation
